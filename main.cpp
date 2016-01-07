@@ -580,10 +580,42 @@ void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* Cu
         AlphaEnd=255;
       }
 
+      double da=double(a)/AlphaSteps;
+
       for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
-        AlphaVecCurrent.at(i)=AlphaStart+(AlphaEnd-AlphaStart)*double(i)/CurrentTextureStripes.size();
+      {
+        if (double(i)/CurrentTextureStripes.size()<da+0.1)
+        {
+          AlphaVecCurrent.at(i)=255;
+        }
+        else if (double(i)/CurrentTextureStripes.size()>da+0.3)
+        {
+          AlphaVecCurrent.at(i)=0;
+        }
+        else
+        {
+          AlphaVecCurrent.at(i)=127;
+        }
+        //AlphaVecCurrent.at(i)=AlphaStart+(AlphaEnd-AlphaStart)*double(i)/CurrentTextureStripes.size();
+      }
       for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-        AlphaVecOld.at(i)=255-(AlphaStart+(AlphaEnd-AlphaStart)*double(i)/OldTextureStripes.size());
+      {
+        if (double(i)/OldTextureStripes.size()<da+0.1)
+        {
+          AlphaVecOld.at(i)=0;
+        }
+        else if (double(i)/OldTextureStripes.size()>da+0.3)
+        {
+          AlphaVecOld.at(i)=255;
+        }
+        else
+        {
+          AlphaVecOld.at(i)=127;
+        }
+        //AlphaVecCurrent.at(i)=AlphaStart+(AlphaEnd-AlphaStart)*double(i)/CurrentTextureStripes.size();
+      }
+      //for (Uint32 i=0; i<OldTextureStripes.size(); i++)
+        //AlphaVecOld.at(i)=255-(AlphaStart+(AlphaEnd-AlphaStart)*double(i)/OldTextureStripes.size());
 
 
       for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
@@ -630,6 +662,4 @@ void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* Cu
     break;
   }
   }
-
-
 }
