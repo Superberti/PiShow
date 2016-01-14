@@ -16,8 +16,9 @@
 
 using namespace std;
 
-const int ScreenWidth=1920;
-const int ScreenHeight=1200;
+int gScreenWidth=1920;
+int gScreenHeight=1200;
+double gScreenAspectRatio=double(gScreenWidth)/double(gScreenHeight);
 const int gSegmentHeight=10;
 SDL_Window* gWindow = NULL;
 string gOldFilename,gCurrentFilename;
@@ -74,6 +75,27 @@ int main(int argc, char** argv)
   // Initialize SDL
   check_error_sdl(SDL_Init(SDL_INIT_VIDEO) != 0, "Unable to initialize SDL");
 
+  SDL_DisplayMode current;
+
+  // Get current display mode of all displays.
+  for(int i = 0; i < SDL_GetNumVideoDisplays(); ++i)
+  {
+
+    check_error_sdl(SDL_GetCurrentDisplayMode(i, &current),"SDL_GetCurrentDisplayMode failed.");
+
+    // On success, print the current display mode.
+    printf("Display #%d: current display mode is %dx%dpx @ %dhz. \n", i, current.w, current.h, current.refresh_rate);
+    if (i==0)
+    {
+      // Größen vom ersten Display übernehmen
+      gScreenWidth=current.w;
+      gScreenHeight=current.h;
+      gScreenAspectRatio=double(gScreenWidth)/double(gScreenHeight);
+    }
+
+  }
+
+
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
@@ -87,7 +109,7 @@ int main(int argc, char** argv)
 
   // Create and initialize a 800x600 window
   gWindow = SDL_CreateWindow("Test SDL 2", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                             ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+                             gScreenWidth, gScreenHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
   check_error_sdl(gWindow == NULL, "Unable to create window");
 
   // Create and initialize a hardware accelerated renderer that will be refreshed in sync with your monitor (at approx. 60 Hz)
@@ -188,10 +210,10 @@ bool WaitAndCheckForQuit(Uint32 aWaitTime_ms)
     {
       switch (event.type)
       {
-      case SDL_QUIT:
-        /* Quit */
-        quit = true;
-        break;
+        case SDL_QUIT:
+          /* Quit */
+          quit = true;
+          break;
       }
     }
     SDL_Delay(10);
@@ -429,237 +451,267 @@ void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* Cu
     CurrentRect.w = min(ScreenWidth,CurrentTextureWidth);
     CurrentRect.h = min(ScreenHeight,CurrentTextureHeight);
   */
+  double CurrentTextureAspectRatio=double(CurrentTextureWidth)/CurrentTextureHeight;
+  double OldTextureAspectRatio=double(OldTextureWidth)/OldTextureHeight;
   SDL_Rect OldRect;
+  SDL_Rect CurrentRect;
   bool CurrentPortraitMode=CurrentTextureHeight>CurrentTextureWidth;
   bool OldPortraitMode=OldTextureHeight>OldTextureWidth;
-  OldRect.x = 0;
-  OldRect.y = 0;
-  OldRect.w = OldPortraitMode ? min(ScreenWidth,OldTextureWidth) : ScreenWidth;
-  OldRect.h = OldPortraitMode ? ScreenHeight : OldTextureHeight*double(ScreenWidth)/double(OldTextureWidth);
-  SDL_Rect CurrentRect;
-  CurrentRect.x = 0;
-  CurrentRect.y = 0;
-  CurrentRect.w = CurrentPortraitMode ? min(ScreenWidth,CurrentTextureWidth) : ScreenWidth;
-  CurrentRect.h = CurrentPortraitMode ? ScreenHeight : CurrentTextureHeight*double(ScreenWidth)/double(CurrentTextureWidth);
+
+  // Unterscheidung: Bild hat einen größeren (breiteren) AspectRation als der Monitor:
+  if (CurrentTextureAspectRatio>gScreenAspectRatio)
+  {
+    CurrentRect.w = gScreenWidth;
+    CurrentRect.h = double(gScreenWidth)/CurrentTextureAspectRatio;
+    CurrentRect.x = 0;
+    CurrentRect.y = (gScreenHeight-CurrentRect.h)/2;
+  }
+  else
+  {
+    // Monitor ist breiter als das Bild
+    CurrentRect.w = gScreenHeight*CurrentTextureAspectRatio;
+    CurrentRect.h = gScreenHeight;
+    CurrentRect.x = (gScreenWidth-CurrentRect.w)/2;
+    CurrentRect.y = 0;
+  }
+
+  // Unterscheidung: Bild hat einen größeren (breiteren) AspectRation als der Monitor:
+  if (OldTextureAspectRatio>gScreenAspectRatio)
+  {
+    OldRect.w = gScreenWidth;
+    OldRect.h = double(gScreenWidth)/OldTextureAspectRatio;
+    OldRect.x = 0;
+    OldRect.y = (gScreenHeight-OldRect.h)/2;
+  }
+  else
+  {
+    // Monitor ist breiter als das Bild
+    OldRect.w = gScreenHeight*OldTextureAspectRatio;
+    OldRect.h = gScreenHeight;
+    OldRect.x = (gScreenWidth-OldRect.w)/2;
+    OldRect.y = 0;
+  }
+
+
   //bool quit=false;
 
   switch(aEffect)
   {
-  case ZoomInOut:
-  {
-    const int NumSteps=300;
-    for (int i=0; i<=NumSteps; i++)
-    {
-      CurrentRect.w = CurrentTextureWidth*i/double(NumSteps);
-      CurrentRect.h = CurrentTextureHeight*i/double(NumSteps);
-
-      OldRect.w = OldTextureWidth*(1-i/double(NumSteps));/*+1920*10/double(NumSteps)*/;
-      OldRect.h = OldTextureHeight*(1-i/double(NumSteps));/*+1200*10/double(NumSteps)*/;
-      OldRect.x = OldTextureWidth*(i/double(NumSteps))-1;
-      OldRect.y = OldTextureHeight*(i/double(NumSteps))-1;
-
-      // Clear the window content (using the default renderer color)
-      //SDL_RenderClear(aRenderer);
-
-      // Copy the texture on the renderer
-      if (OldTexture!=NULL)
-        SDL_RenderCopy(aRenderer, OldTexture, NULL, &OldRect);
-      // Copy the texture on the renderer
-      SDL_RenderCopy(aRenderer, CurrentTexture, NULL, &CurrentRect);
-
-      // Update the window surface (show the renderer)
-      SDL_RenderPresent(aRenderer);
-
-      SDL_Delay(10);
-    }
-    break;
-  }
-  case AlphaBlending:
-  {
-    check_error_sdl(SDL_SetTextureBlendMode(CurrentTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
-    if (OldTexture!=NULL)
-      check_error_sdl(SDL_SetTextureBlendMode(OldTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
-    const int NumSteps=255;
-    for (int i=0; i<=NumSteps; i+=2)
-    {
-      SDL_SetTextureAlphaMod( CurrentTexture, i );
-
-      if (OldTexture!=NULL)
-        SDL_SetTextureAlphaMod( OldTexture, NumSteps-i );
-
-      if (OldTexture!=NULL)
-        SDL_RenderCopy(aRenderer, OldTexture, NULL, &OldRect);
-      // Copy the texture on the renderer
-      SDL_RenderCopy(aRenderer, CurrentTexture, NULL, &CurrentRect);
-      // Update the window surface (show the renderer)
-      SDL_RenderPresent(aRenderer);
-
-      SDL_Delay(5);
-    }
-    break;
-  }
-  case AlphaMoving:
-  {
-
-    check_error_sdl(SDL_SetTextureBlendMode(CurrentTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
-    if (OldTexture!=NULL)
-      check_error_sdl(SDL_SetTextureBlendMode(OldTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
-
-    unsigned char * aPixelsCurrent=NULL;
-    int mPitchCurrent=0;
-    check_error_sdl(SDL_LockTexture(CurrentTexture,NULL, (void**)&aPixelsCurrent, &mPitchCurrent),"SDL_LockTexture");
-    const int NumBytesCurrent=mPitchCurrent*CurrentTextureHeight;
-    const int Loops=NumBytesCurrent/2;
-
-    for (int i=0; i<Loops; i+=4)
-      aPixelsCurrent[i+3]=127;
-
-
-    SDL_UnlockTexture(CurrentTexture);
-
-    long long start=GetTime_us();
-    /*
-    for (int y=0;y<ScreenHeight;y++)
-      for (int x=0;x<ScreenWidth;x++)
-        SDL_RenderDrawPoint(aRenderer,x,y);
-        */
-    long long ende=GetTime_us();
-
-    unsigned char * aPixelsOld=NULL;
-    if (OldTexture!=NULL)
-    {
-      int mPitchOld=0;
-      check_error_sdl(SDL_LockTexture(OldTexture,NULL, (void**)&aPixelsOld, &mPitchOld),"SDL_LockTexture");
-      const int NumBytesOld=OldTextureHeight*mPitchOld;
-      for (int i=0; i<NumBytesOld/2; i+=4)
-        aPixelsOld[i+3]=127;
-      SDL_UnlockTexture(OldTexture);
-    }
-
-    printf("Effektdauer :%.2f ms\r\n",double(ende-start)/1000.0);
-    // Copy the texture on the renderer
-    if (OldTexture!=NULL)
-      SDL_RenderCopy(aRenderer, OldTexture, NULL, &OldRect);
-    SDL_RenderCopy(aRenderer, CurrentTexture, NULL, &CurrentRect);
-
-    // Update the window surface (show the renderer)
-    SDL_RenderPresent(aRenderer);
-    break;
-  }
-  case MovingToRight:
-  {
-    vector<SDL_Texture*> CurrentTextureStripes=LoadTextureStripes(gCurrentFilename, aRenderer);
-    vector<SDL_Texture*> OldTextureStripes;
-    for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
-      check_error_sdl(SDL_SetTextureBlendMode(CurrentTextureStripes[i], SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
-
-    if (!gOldFilename.empty())
-    {
-      OldTextureStripes=LoadTextureStripes(gOldFilename, aRenderer);
-      for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-        check_error_sdl(SDL_SetTextureBlendMode(OldTextureStripes[i], SDL_BLENDMODE_BLEND),"Setting alpha blend mode old texture");
-    }
-
-    vector<unsigned char> AlphaVecCurrent(CurrentTextureStripes.size());
-    vector<unsigned char> AlphaVecOld(OldTextureStripes.size());
-    const Uint32 AlphaSteps=40;
-    const Uint32 HalfAlphaSteps=AlphaSteps/2;
-    double AlphaStart,AlphaEnd;
-
-    for (Uint32 a=0; a<AlphaSteps; a++)
-    {
-      // Berechnung der Textur-Alphawerte
-      if (a<HalfAlphaSteps)
+    case ZoomInOut:
       {
-        AlphaStart=0;
-        AlphaEnd=double(a)/HalfAlphaSteps*255;
+        const int NumSteps=300;
+        for (int i=0; i<=NumSteps; i++)
+        {
+          CurrentRect.w = CurrentTextureWidth*i/double(NumSteps);
+          CurrentRect.h = CurrentTextureHeight*i/double(NumSteps);
+
+          OldRect.w = OldTextureWidth*(1-i/double(NumSteps));/*+1920*10/double(NumSteps)*/;
+          OldRect.h = OldTextureHeight*(1-i/double(NumSteps));/*+1200*10/double(NumSteps)*/;
+          OldRect.x = OldTextureWidth*(i/double(NumSteps))-1;
+          OldRect.y = OldTextureHeight*(i/double(NumSteps))-1;
+
+          // Clear the window content (using the default renderer color)
+          //SDL_RenderClear(aRenderer);
+
+          // Copy the texture on the renderer
+          if (OldTexture!=NULL)
+            SDL_RenderCopy(aRenderer, OldTexture, NULL, &OldRect);
+          // Copy the texture on the renderer
+          SDL_RenderCopy(aRenderer, CurrentTexture, NULL, &CurrentRect);
+
+          // Update the window surface (show the renderer)
+          SDL_RenderPresent(aRenderer);
+
+          SDL_Delay(10);
+        }
+        break;
       }
-      else
+    case AlphaBlending:
       {
-        AlphaStart=double(a-HalfAlphaSteps)/HalfAlphaSteps*255;
-        AlphaEnd=255;
+        check_error_sdl(SDL_SetTextureBlendMode(CurrentTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+        if (OldTexture!=NULL)
+          check_error_sdl(SDL_SetTextureBlendMode(OldTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+        const int NumSteps=255;
+        for (int i=0; i<=NumSteps; i+=2)
+        {
+          SDL_SetTextureAlphaMod( CurrentTexture, i );
+
+          if (OldTexture!=NULL)
+            SDL_SetTextureAlphaMod( OldTexture, NumSteps-i );
+
+          if (OldTexture!=NULL)
+            SDL_RenderCopy(aRenderer, OldTexture, NULL, &OldRect);
+          // Copy the texture on the renderer
+          SDL_RenderCopy(aRenderer, CurrentTexture, NULL, &CurrentRect);
+          // Update the window surface (show the renderer)
+          SDL_RenderPresent(aRenderer);
+
+          SDL_Delay(5);
+        }
+        break;
       }
-
-      double da=double(a)/AlphaSteps;
-
-      for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
+    case AlphaMoving:
       {
-        if (double(i)/CurrentTextureStripes.size()<da+0.1)
+
+        check_error_sdl(SDL_SetTextureBlendMode(CurrentTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+        if (OldTexture!=NULL)
+          check_error_sdl(SDL_SetTextureBlendMode(OldTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+
+        unsigned char * aPixelsCurrent=NULL;
+        int mPitchCurrent=0;
+        check_error_sdl(SDL_LockTexture(CurrentTexture,NULL, (void**)&aPixelsCurrent, &mPitchCurrent),"SDL_LockTexture");
+        const int NumBytesCurrent=mPitchCurrent*CurrentTextureHeight;
+        const int Loops=NumBytesCurrent/2;
+
+        for (int i=0; i<Loops; i+=4)
+          aPixelsCurrent[i+3]=127;
+
+
+        SDL_UnlockTexture(CurrentTexture);
+
+        long long start=GetTime_us();
+        /*
+        for (int y=0;y<ScreenHeight;y++)
+          for (int x=0;x<ScreenWidth;x++)
+            SDL_RenderDrawPoint(aRenderer,x,y);
+            */
+        long long ende=GetTime_us();
+
+        unsigned char * aPixelsOld=NULL;
+        if (OldTexture!=NULL)
         {
-          AlphaVecCurrent.at(i)=255;
+          int mPitchOld=0;
+          check_error_sdl(SDL_LockTexture(OldTexture,NULL, (void**)&aPixelsOld, &mPitchOld),"SDL_LockTexture");
+          const int NumBytesOld=OldTextureHeight*mPitchOld;
+          for (int i=0; i<NumBytesOld/2; i+=4)
+            aPixelsOld[i+3]=127;
+          SDL_UnlockTexture(OldTexture);
         }
-        else if (double(i)/CurrentTextureStripes.size()>da+0.3)
-        {
-          AlphaVecCurrent.at(i)=0;
-        }
-        else
-        {
-          AlphaVecCurrent.at(i)=127;
-        }
-        //AlphaVecCurrent.at(i)=AlphaStart+(AlphaEnd-AlphaStart)*double(i)/CurrentTextureStripes.size();
+
+        printf("Effektdauer :%.2f ms\r\n",double(ende-start)/1000.0);
+        // Copy the texture on the renderer
+        if (OldTexture!=NULL)
+          SDL_RenderCopy(aRenderer, OldTexture, NULL, &OldRect);
+        SDL_RenderCopy(aRenderer, CurrentTexture, NULL, &CurrentRect);
+
+        // Update the window surface (show the renderer)
+        SDL_RenderPresent(aRenderer);
+        break;
       }
-      for (Uint32 i=0; i<OldTextureStripes.size(); i++)
+    case MovingToRight:
       {
-        if (double(i)/OldTextureStripes.size()<da+0.1)
+        vector<SDL_Texture*> CurrentTextureStripes=LoadTextureStripes(gCurrentFilename, aRenderer);
+        vector<SDL_Texture*> OldTextureStripes;
+        for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
+          check_error_sdl(SDL_SetTextureBlendMode(CurrentTextureStripes[i], SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+
+        if (!gOldFilename.empty())
         {
-          AlphaVecOld.at(i)=0;
+          OldTextureStripes=LoadTextureStripes(gOldFilename, aRenderer);
+          for (Uint32 i=0; i<OldTextureStripes.size(); i++)
+            check_error_sdl(SDL_SetTextureBlendMode(OldTextureStripes[i], SDL_BLENDMODE_BLEND),"Setting alpha blend mode old texture");
         }
-        else if (double(i)/OldTextureStripes.size()>da+0.3)
+
+        vector<unsigned char> AlphaVecCurrent(CurrentTextureStripes.size());
+        vector<unsigned char> AlphaVecOld(OldTextureStripes.size());
+        const Uint32 AlphaSteps=40;
+        const Uint32 HalfAlphaSteps=AlphaSteps/2;
+        double AlphaStart,AlphaEnd;
+
+        for (Uint32 a=0; a<AlphaSteps; a++)
         {
-          AlphaVecOld.at(i)=255;
+          // Berechnung der Textur-Alphawerte
+          if (a<HalfAlphaSteps)
+          {
+            AlphaStart=0;
+            AlphaEnd=double(a)/HalfAlphaSteps*255;
+          }
+          else
+          {
+            AlphaStart=double(a-HalfAlphaSteps)/HalfAlphaSteps*255;
+            AlphaEnd=255;
+          }
+
+          double da=double(a)/AlphaSteps;
+
+          for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
+          {
+            if (double(i)/CurrentTextureStripes.size()<da+0.1)
+            {
+              AlphaVecCurrent.at(i)=255;
+            }
+            else if (double(i)/CurrentTextureStripes.size()>da+0.3)
+            {
+              AlphaVecCurrent.at(i)=0;
+            }
+            else
+            {
+              AlphaVecCurrent.at(i)=127;
+            }
+            //AlphaVecCurrent.at(i)=AlphaStart+(AlphaEnd-AlphaStart)*double(i)/CurrentTextureStripes.size();
+          }
+          for (Uint32 i=0; i<OldTextureStripes.size(); i++)
+          {
+            if (double(i)/OldTextureStripes.size()<da+0.1)
+            {
+              AlphaVecOld.at(i)=0;
+            }
+            else if (double(i)/OldTextureStripes.size()>da+0.3)
+            {
+              AlphaVecOld.at(i)=255;
+            }
+            else
+            {
+              AlphaVecOld.at(i)=127;
+            }
+            //AlphaVecCurrent.at(i)=AlphaStart+(AlphaEnd-AlphaStart)*double(i)/CurrentTextureStripes.size();
+          }
+          //for (Uint32 i=0; i<OldTextureStripes.size(); i++)
+          //AlphaVecOld.at(i)=255-(AlphaStart+(AlphaEnd-AlphaStart)*double(i)/OldTextureStripes.size());
+
+
+          for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
+            SDL_SetTextureAlphaMod( CurrentTextureStripes[i], AlphaVecCurrent[i]/*double(a)/40.0*double(i)/double(CurrentTextureStripes.size())*256*/ );
+
+          for (Uint32 i=0; i<OldTextureStripes.size(); i++)
+            SDL_SetTextureAlphaMod( OldTextureStripes[i], AlphaVecOld[i]/*double(a)/40.0*double(i)/double(OldTextureStripes.size())*256*/ );
+
+          for (Uint32 i=0; i<OldTextureStripes.size(); i++)
+          {
+            OldRect.x = 0;
+            OldRect.y = i*gSegmentHeight;
+            OldRect.w = gScreenWidth;
+            OldRect.h = gSegmentHeight;
+
+            SDL_RenderCopy(aRenderer, OldTextureStripes[i], NULL, &OldRect);
+          }
+
+          for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
+          {
+            CurrentRect.x = 0;
+            CurrentRect.y = i*gSegmentHeight;
+            CurrentRect.w = gScreenWidth;
+            CurrentRect.h = gSegmentHeight;
+
+            SDL_RenderCopy(aRenderer, CurrentTextureStripes[i], NULL, &CurrentRect);
+          }
+          SDL_RenderPresent(aRenderer);
+          SDL_Delay(50);
         }
-        else
-        {
-          AlphaVecOld.at(i)=127;
-        }
-        //AlphaVecCurrent.at(i)=AlphaStart+(AlphaEnd-AlphaStart)*double(i)/CurrentTextureStripes.size();
+        //sleep(5);
+        for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
+          SDL_DestroyTexture(CurrentTextureStripes[i]);
+        for (Uint32 i=0; i<OldTextureStripes.size(); i++)
+          SDL_DestroyTexture( OldTextureStripes[i]);
+        break;
       }
-      //for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-        //AlphaVecOld.at(i)=255-(AlphaStart+(AlphaEnd-AlphaStart)*double(i)/OldTextureStripes.size());
-
-
-      for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
-        SDL_SetTextureAlphaMod( CurrentTextureStripes[i], AlphaVecCurrent[i]/*double(a)/40.0*double(i)/double(CurrentTextureStripes.size())*256*/ );
-
-      for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-        SDL_SetTextureAlphaMod( OldTextureStripes[i], AlphaVecOld[i]/*double(a)/40.0*double(i)/double(OldTextureStripes.size())*256*/ );
-
-      for (Uint32 i=0; i<OldTextureStripes.size(); i++)
+    case MovingToLeft:
       {
-        OldRect.x = 0;
-        OldRect.y = i*gSegmentHeight;
-        OldRect.w = ScreenWidth;
-        OldRect.h = gSegmentHeight;
-
-        SDL_RenderCopy(aRenderer, OldTextureStripes[i], NULL, &OldRect);
+        break;
       }
-
-      for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
+    case Mosaic:
       {
-        CurrentRect.x = 0;
-        CurrentRect.y = i*gSegmentHeight;
-        CurrentRect.w = ScreenWidth;
-        CurrentRect.h = gSegmentHeight;
-
-        SDL_RenderCopy(aRenderer, CurrentTextureStripes[i], NULL, &CurrentRect);
+        break;
       }
-      SDL_RenderPresent(aRenderer);
-      SDL_Delay(50);
-    }
-    //sleep(5);
-    for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
-      SDL_DestroyTexture(CurrentTextureStripes[i]);
-    for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-      SDL_DestroyTexture( OldTextureStripes[i]);
-    break;
-  }
-  case MovingToLeft:
-  {
-    break;
-  }
-  case Mosaic:
-  {
-    break;
-  }
   }
 }
