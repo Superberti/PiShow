@@ -6,6 +6,10 @@
 #include <vector>
 #include <string>
 
+struct SDL_Texture;
+
+void BlurTexture(SDL_Texture* pTexture, int r);
+
 /// Funktion für den Gaussian-Blur-Effekt auf einem Graukanal
 /// Ein Graukanal wird als zusammenhängendes Array ohne Padding definiert
 /// \param scl Source-Array mit Grauwerten

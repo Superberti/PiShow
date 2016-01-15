@@ -13,6 +13,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include "main.h"
+#include "GaussianBlur.h"
+#include "SdlTools.h"
 
 using namespace std;
 
@@ -221,26 +223,6 @@ bool WaitAndCheckForQuit(Uint32 aWaitTime_ms)
   return quit;
 }
 
-// In case of error, print the error code and close the application
-void check_error_sdl(bool check, const char* message)
-{
-  if (check)
-  {
-    string ErrorMsg=string(message)+" "+string(SDL_GetError());
-    throw runtime_error(ErrorMsg);
-  }
-}
-
-// In case of error, print the error code and close the application
-void check_error_sdl_img(bool check, const char* message)
-{
-  if (check)
-  {
-    string ErrorMsg=string(message)+" "+string(IMG_GetError());
-    throw runtime_error(ErrorMsg);
-  }
-}
-
 // Load an image from "fname" and return an SDL_Texture with the content of the image
 SDL_Texture* load_texture(const std::string aFileName, SDL_Renderer *renderer)
 {
@@ -270,7 +252,7 @@ SDL_Texture* load_texture(const std::string aFileName, SDL_Renderer *renderer)
                                      0,
                                      0);
 
-    check_error_sdl_img(image == NULL, "Unable to load image");
+    check_error_sdl(image == NULL, "SDL_CreateRGBSurfaceFrom failed");
     Uint32 format = SDL_GetWindowPixelFormat(gWindow);
     if (format==SDL_PIXELFORMAT_UNKNOWN)
       throw runtime_error( "Unable to get pixel format! SDL Error: " + string(SDL_GetError() ));
@@ -344,10 +326,10 @@ vector<SDL_Texture*> LoadTextureStripes(const std::string aFileName, SDL_Rendere
                                        0,
                                        0);
 
-      check_error_sdl_img(image == NULL, "Unable to load image");
+      check_error_sdl(image == NULL, "SDL_CreateRGBSurfaceFrom failed");
 
       img_texture = SDL_CreateTextureFromSurface(renderer, image);
-      check_error_sdl_img(img_texture == NULL, "Unable to create a texture from the image");
+      check_error_sdl(img_texture == NULL, "SDL_CreateTextureFromSurface failed.");
       SDL_FreeSurface(image);
       image=NULL;
       img_textures.push_back(img_texture);

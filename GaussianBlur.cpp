@@ -1,7 +1,39 @@
 #include "GaussianBlur.h"
+#include <SDL2/SDL.h>
+#include "SdlTools.h"
 
 using namespace std;
 
+/// wendet den Blur-Effekt auf eine Textur an
+void BlurTexture(SDL_Texture* pTexture, int r)
+{
+  int CurrentTextureWidth=0;
+  int CurrentTextureHeight=0;
+  unsigned char * aPixelsCurrent=NULL;
+  int mPitchCurrent=0;
+  Uint32 mFormat=SDL_PIXELFORMAT_UNKNOWN;
+  check_error_sdl(SDL_QueryTexture(pTexture, &mFormat, NULL, &CurrentTextureWidth, &CurrentTextureHeight),"SDL_QueryTexture");
+  check_error_sdl(SDL_LockTexture(pTexture,NULL, (void**)&aPixelsCurrent, &mPitchCurrent),"SDL_LockTexture");
+  const int NumBytesCurrent=mPitchCurrent*CurrentTextureHeight;
+  // Aufteilung in einzelne Farbkanäle
+  unsigned char * rc=new unsigned char[NumBytesCurrent/4];
+  unsigned char * gc=new unsigned char[NumBytesCurrent/4];
+  unsigned char * bc=new unsigned char[NumBytesCurrent/4];
+  int cc=0;
+  for (int i=0; i<NumBytesCurrent; i+=4)
+  {
+    bc[cc]=aPixelsCurrent[i];
+    gc[cc]=aPixelsCurrent[i+1];
+    rc[cc]=aPixelsCurrent[i+2];
+    cc++;
+  }
+  SDL_UnlockTexture(pTexture);
+  delete[] rc;
+  delete[] gc;
+  delete[] bc;
+}
+
+/// Einen Farbkanal blurren
 void gaussBlur_4 (unsigned char *scl, unsigned char* tcl,int scl_length, int w,int h,int r)
 {
   vector<int> bxs = boxesForGauss(r, 3);

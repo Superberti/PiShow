@@ -38,6 +38,10 @@
 			<Add option="`sdl2-config --libs` -lSDL2_image -lSDL2_ttf" />
 			<Add library="/opt/libjpeg-turbo/lib32/libturbojpeg.a" />
 		</Linker>
+		<Unit filename="GaussianBlur.cpp" />
+		<Unit filename="GaussianBlur.h" />
+		<Unit filename="SdlTools.cpp" />
+		<Unit filename="SdlTools.h" />
 		<Unit filename="cb.bmp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="tools.cpp" />

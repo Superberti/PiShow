@@ -18,9 +18,7 @@ enum BlendEffect
 };
 
 unsigned char* GetImage(std::string aFileName, int & width, int & height, int & aRawDataSize);
-// Manage error messages
-void check_error_sdl(bool check, const char* message);
-void check_error_sdl_img(bool check, const char* message);
+
 bool WaitAndCheckForQuit(Uint32 aWaitTime);
 void DoBlendEffect(SDL_Renderer* aRenderer,BlendEffect aEffect, SDL_Texture* aCurrentTexture, SDL_Texture* aOldTexture);
 
