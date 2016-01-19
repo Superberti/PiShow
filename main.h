@@ -5,6 +5,25 @@
 #include "optionparser.h"
 #include "tools.h"
 
+class PiShowParams
+{
+public:
+  int ScreenWidth;
+  int ScreenHeight;
+  double ScreenAspectRatio;
+  static const int SegmentHeight;
+  SDL_Window* Window;
+  std::string OldFilename,CurrentFilename;
+  SDL_Texture* CurrentTexture;
+  SDL_Texture* OldTexture;
+  SDL_Texture* CurrentStripe1Texture;
+  SDL_Texture* CurrentStripe2Texture;
+  SDL_Texture* OldStripe1Texture;
+  SDL_Texture* OldStripe2Texture;
+  SDL_Renderer* Renderer;
+  PiShowParams();
+};
+
 enum BlendEffect
 {
   FirstEffect,
@@ -20,11 +39,11 @@ enum BlendEffect
 unsigned char* GetImage(std::string aFileName, int & width, int & height, int & aRawDataSize);
 
 bool WaitAndCheckForQuit(Uint32 aWaitTime);
-void DoBlendEffect(SDL_Renderer* aRenderer,BlendEffect aEffect, SDL_Texture* aCurrentTexture, SDL_Texture* aOldTexture);
+void DoBlendEffect(BlendEffect aEffect, PiShowParams& aParams);
 
 // Load an image from "fname" and return an SDL_Texture with the content of the image
-SDL_Texture* load_texture(const std::string fname, SDL_Renderer *renderer);
-std::vector<SDL_Texture*> LoadTextureStripes(const std::string aFileName, SDL_Renderer *renderer);
+SDL_Texture* load_texture(const std::string fname, PiShowParams& aParams);
+//std::vector<SDL_Texture*> LoadTextureStripes(const std::string aFileName, SDL_Renderer *renderer);
 
 struct Arg: public option::Arg
 {

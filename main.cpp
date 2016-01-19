@@ -17,16 +17,33 @@
 #include "SdlTools.h"
 
 using namespace std;
-
+const int PiShowParams::SegmentHeight=10;
+PiShowParams::PiShowParams()
+  : ScreenWidth(0)
+  , ScreenHeight(0)
+  , ScreenAspectRatio(0.0)
+  , Window(NULL)
+  , CurrentTexture(NULL)
+  , OldTexture(NULL)
+  , CurrentStripe1Texture(NULL)
+  , CurrentStripe2Texture(NULL)
+  , OldStripe1Texture(NULL)
+  , OldStripe2Texture(NULL)
+  , Renderer(NULL)
+{
+}
+/*
 int gScreenWidth=1920;
 int gScreenHeight=1200;
 double gScreenAspectRatio=double(gScreenWidth)/double(gScreenHeight);
 const int gSegmentHeight=10;
 SDL_Window* gWindow = NULL;
 string gOldFilename,gCurrentFilename;
+*/
 
 int main(int argc, char** argv)
 {
+  PiShowParams gParams;
   const int DefaultSleepTime_s=5;
   int SleepTime_s=DefaultSleepTime_s;
   int DefaultBlendEffect=AlphaBlending;
@@ -90,9 +107,9 @@ int main(int argc, char** argv)
     if (i==0)
     {
       // Größen vom ersten Display übernehmen
-      gScreenWidth=current.w;
-      gScreenHeight=current.h;
-      gScreenAspectRatio=double(gScreenWidth)/double(gScreenHeight);
+      gParams.ScreenWidth=current.w;
+      gParams.ScreenHeight=current.h;
+      gParams.ScreenAspectRatio=double(gParams.ScreenWidth)/double(gParams.ScreenHeight);
     }
 
   }
@@ -110,19 +127,19 @@ int main(int argc, char** argv)
 
 
   // Create and initialize a 800x600 window
-  gWindow = SDL_CreateWindow("Test SDL 2", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                             gScreenWidth, gScreenHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
-  check_error_sdl(gWindow == NULL, "Unable to create window");
+  gParams.Window = SDL_CreateWindow("Test SDL 2", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                             gParams.ScreenWidth, gParams.ScreenHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+  check_error_sdl(gParams.Window == NULL, "Unable to create window");
 
   // Create and initialize a hardware accelerated renderer that will be refreshed in sync with your monitor (at approx. 60 Hz)
-  SDL_Renderer* renderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-  check_error_sdl(renderer == NULL, "Unable to create a renderer");
+  gParams.Renderer = SDL_CreateRenderer(gParams.Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  check_error_sdl(gParams.Renderer == NULL, "Unable to create a renderer");
 
   // Set the default renderer color to corn blue
   //SDL_SetRenderDrawColor(renderer, 100, 149, 237, 255);
   // Query renderer info
   SDL_RendererInfo info;
-  check_error_sdl( SDL_GetRendererInfo(renderer, &info),"SDL_GetRendererInfo failed.");
+  check_error_sdl( SDL_GetRendererInfo(gParams.Renderer, &info),"SDL_GetRendererInfo failed.");
   printf("Renderer info:\r\n");
   printf("Renderer is a software fallback: %s\r\n",info.flags & SDL_RENDERER_SOFTWARE ? "YES" : "NO");
   printf("Renderer uses hardware acceleration: %s\r\n",info.flags & SDL_RENDERER_ACCELERATED ? "YES" : "NO");
@@ -143,9 +160,6 @@ int main(int argc, char** argv)
   int ErrCount=0;
   const int MaxErrCount=5;
 
-  SDL_Texture *OldTexture=NULL;
-  SDL_Texture *CurrentTexture=NULL;
-
   bool quit=false;
   do
   {
@@ -154,20 +168,20 @@ int main(int argc, char** argv)
     {
       try
       {
-        gCurrentFilename=parse.nonOption(i);
+        gParams.CurrentFilename=parse.nonOption(i);
 
-        CurrentTexture=load_texture(gCurrentFilename,renderer);
+        gParams.CurrentTexture=load_texture(gParams.CurrentFilename,gParams);
 
-        DoBlendEffect(renderer, (BlendEffect)MyBlendEffect, CurrentTexture, OldTexture);
+        DoBlendEffect((BlendEffect)MyBlendEffect, gParams);
 
         quit= WaitAndCheckForQuit(SleepTime_s*1000);
         //sleep(SleepTime_s);
 
-        if (OldTexture!=NULL)
-          SDL_DestroyTexture(OldTexture);
+        if (gParams.OldTexture!=NULL)
+          SDL_DestroyTexture(gParams.OldTexture);
 
-        OldTexture=CurrentTexture;
-        gOldFilename=gCurrentFilename;
+        gParams.OldTexture=gParams.CurrentTexture;
+        gParams.OldFilename=gParams.CurrentFilename;
 
       }
       catch (exception& aErr)
@@ -192,10 +206,10 @@ int main(int argc, char** argv)
   while (DoLoop && !quit);
 
 
-  if (OldTexture!=NULL)
-    SDL_DestroyTexture(OldTexture);
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(gWindow);
+  if (gParams.OldTexture!=NULL)
+    SDL_DestroyTexture(gParams.OldTexture);
+  SDL_DestroyRenderer(gParams.Renderer);
+  SDL_DestroyWindow(gParams.Window);
   SDL_Quit();
   fprintf(stderr,"Programm normal beendet!\r\n");
   return 0;
@@ -224,7 +238,7 @@ bool WaitAndCheckForQuit(Uint32 aWaitTime_ms)
 }
 
 // Load an image from "fname" and return an SDL_Texture with the content of the image
-SDL_Texture* load_texture(const std::string aFileName, SDL_Renderer *renderer)
+SDL_Texture* load_texture(const std::string aFileName, PiShowParams& aParams)
 {
   int Height=0;
   int Width=0;
@@ -253,7 +267,7 @@ SDL_Texture* load_texture(const std::string aFileName, SDL_Renderer *renderer)
                                      0);
 
     check_error_sdl(image == NULL, "SDL_CreateRGBSurfaceFrom failed");
-    Uint32 format = SDL_GetWindowPixelFormat(gWindow);
+    Uint32 format = SDL_GetWindowPixelFormat(aParams.Window);
     if (format==SDL_PIXELFORMAT_UNKNOWN)
       throw runtime_error( "Unable to get pixel format! SDL Error: " + string(SDL_GetError() ));
     //Convert surface to display format
@@ -265,7 +279,7 @@ SDL_Texture* load_texture(const std::string aFileName, SDL_Renderer *renderer)
     if( formattedSurface == NULL )
       throw runtime_error( "Unable to convert loaded surface to display format! SDL Error: " + string(SDL_GetError() ));
 
-    img_texture = SDL_CreateTexture( renderer, SDL_GetWindowPixelFormat( gWindow ), SDL_TEXTUREACCESS_STREAMING , formattedSurface->w, formattedSurface->h );
+    img_texture = SDL_CreateTexture( aParams.Renderer, SDL_GetWindowPixelFormat( aParams.Window ), SDL_TEXTUREACCESS_STREAMING , formattedSurface->w, formattedSurface->h );
     if( img_texture == NULL )
       throw runtime_error("Unable to create blank texture! SDL Error: " +string(SDL_GetError() ));
 
@@ -293,7 +307,7 @@ SDL_Texture* load_texture(const std::string aFileName, SDL_Renderer *renderer)
   delete[] pImage;
   return img_texture;
 }
-
+/*
 // Load an image from "fname" and return an SDL_Texture with the content of the image
 vector<SDL_Texture*> LoadTextureStripes(const std::string aFileName, SDL_Renderer *renderer)
 {
@@ -347,7 +361,7 @@ vector<SDL_Texture*> LoadTextureStripes(const std::string aFileName, SDL_Rendere
     SDL_FreeSurface(image);
   delete[] pImage;
   return img_textures;
-}
+}*/
 
 unsigned char* GetImage(const std::string aFileName, int & width, int & height, int & aRawDataLength)
 {
@@ -406,33 +420,17 @@ unsigned char* GetImage(const std::string aFileName, int & width, int & height, 
   return buffer;
 }
 
-void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* CurrentTexture, SDL_Texture* OldTexture)
+void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
 {
   // Größe der beiden Texturen
   int CurrentTextureWidth=0;
   int CurrentTextureHeight=0;
   int OldTextureWidth=0;
   int OldTextureHeight=0;
-  SDL_QueryTexture(CurrentTexture, NULL, NULL, &CurrentTextureWidth, &CurrentTextureHeight);
-  if (OldTexture!=NULL)
-    SDL_QueryTexture(OldTexture, NULL, NULL, &OldTextureWidth, &OldTextureHeight);
-  /*
-    int CurrentXOffset=(ScreenWidth-CurrentTextureWidth)/2;
-    int CurrentYOffset=(ScreenHeight-CurrentTextureHeight)/2;
-    int OldXOffset=(ScreenWidth-OldTextureWidth)/2;
-    int OldYOffset=(ScreenHeight-OldTextureHeight)/2;
+  SDL_QueryTexture(aParams.CurrentTexture, NULL, NULL, &CurrentTextureWidth, &CurrentTextureHeight);
+  if (aParams.OldTexture!=NULL)
+    SDL_QueryTexture(aParams.OldTexture, NULL, NULL, &OldTextureWidth, &OldTextureHeight);
 
-    SDL_Rect OldRect;
-    OldRect.x = OldXOffset;
-    OldRect.y = OldYOffset;
-    OldRect.w = min(ScreenWidth,OldTextureWidth);
-    OldRect.h = min(ScreenHeight,OldTextureHeight);
-    SDL_Rect CurrentRect;
-    CurrentRect.x = CurrentXOffset;
-    CurrentRect.y = CurrentYOffset;
-    CurrentRect.w = min(ScreenWidth,CurrentTextureWidth);
-    CurrentRect.h = min(ScreenHeight,CurrentTextureHeight);
-  */
   double CurrentTextureAspectRatio=double(CurrentTextureWidth)/CurrentTextureHeight;
   double OldTextureAspectRatio=double(OldTextureWidth)/OldTextureHeight;
   SDL_Rect OldRect;
@@ -441,36 +439,36 @@ void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* Cu
   bool OldPortraitMode=OldTextureHeight>OldTextureWidth;
 
   // Unterscheidung: Bild hat einen größeren (breiteren) AspectRation als der Monitor:
-  if (CurrentTextureAspectRatio>gScreenAspectRatio)
+  if (CurrentTextureAspectRatio>aParams.ScreenAspectRatio)
   {
-    CurrentRect.w = gScreenWidth;
-    CurrentRect.h = double(gScreenWidth)/CurrentTextureAspectRatio;
+    CurrentRect.w = aParams.ScreenWidth;
+    CurrentRect.h = double(aParams.ScreenWidth)/CurrentTextureAspectRatio;
     CurrentRect.x = 0;
-    CurrentRect.y = (gScreenHeight-CurrentRect.h)/2;
+    CurrentRect.y = (aParams.ScreenHeight-CurrentRect.h)/2;
   }
   else
   {
     // Monitor ist breiter als das Bild
-    CurrentRect.w = gScreenHeight*CurrentTextureAspectRatio;
-    CurrentRect.h = gScreenHeight;
-    CurrentRect.x = (gScreenWidth-CurrentRect.w)/2;
+    CurrentRect.w = aParams.ScreenHeight*CurrentTextureAspectRatio;
+    CurrentRect.h = aParams.ScreenHeight;
+    CurrentRect.x = (aParams.ScreenWidth-CurrentRect.w)/2;
     CurrentRect.y = 0;
   }
 
   // Unterscheidung: Bild hat einen größeren (breiteren) AspectRation als der Monitor:
-  if (OldTextureAspectRatio>gScreenAspectRatio)
+  if (OldTextureAspectRatio>aParams.ScreenAspectRatio)
   {
-    OldRect.w = gScreenWidth;
-    OldRect.h = double(gScreenWidth)/OldTextureAspectRatio;
+    OldRect.w = aParams.ScreenWidth;
+    OldRect.h = double(aParams.ScreenWidth)/OldTextureAspectRatio;
     OldRect.x = 0;
-    OldRect.y = (gScreenHeight-OldRect.h)/2;
+    OldRect.y = (aParams.ScreenHeight-OldRect.h)/2;
   }
   else
   {
     // Monitor ist breiter als das Bild
-    OldRect.w = gScreenHeight*OldTextureAspectRatio;
-    OldRect.h = gScreenHeight;
-    OldRect.x = (gScreenWidth-OldRect.w)/2;
+    OldRect.w = aParams.ScreenHeight*OldTextureAspectRatio;
+    OldRect.h = aParams.ScreenHeight;
+    OldRect.x = (aParams.ScreenWidth-OldRect.w)/2;
     OldRect.y = 0;
   }
 
@@ -496,13 +494,13 @@ void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* Cu
           //SDL_RenderClear(aRenderer);
 
           // Copy the texture on the renderer
-          if (OldTexture!=NULL)
-            SDL_RenderCopy(aRenderer, OldTexture, NULL, &OldRect);
+          if (aParams.OldTexture!=NULL)
+            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture, NULL, &OldRect);
           // Copy the texture on the renderer
-          SDL_RenderCopy(aRenderer, CurrentTexture, NULL, &CurrentRect);
+          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture, NULL, &CurrentRect);
 
           // Update the window surface (show the renderer)
-          SDL_RenderPresent(aRenderer);
+          SDL_RenderPresent(aParams.Renderer);
 
           SDL_Delay(10);
         }
@@ -510,38 +508,44 @@ void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* Cu
       }
     case AlphaBlending:
       {
-        check_error_sdl(SDL_SetTextureBlendMode(CurrentTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
-        if (OldTexture!=NULL)
-          check_error_sdl(SDL_SetTextureBlendMode(OldTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+        check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+        if (aParams.OldTexture!=NULL)
+          check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
         const int NumSteps=255;
         for (int i=0; i<=NumSteps; i+=2)
         {
-          SDL_SetTextureAlphaMod( CurrentTexture, i );
+          SDL_SetTextureAlphaMod( aParams.CurrentTexture, i );
 
-          if (OldTexture!=NULL)
-            SDL_SetTextureAlphaMod( OldTexture, NumSteps-i );
+          if (aParams.OldTexture!=NULL)
+            SDL_SetTextureAlphaMod( aParams.OldTexture, NumSteps-i );
 
-          if (OldTexture!=NULL)
-            SDL_RenderCopy(aRenderer, OldTexture, NULL, &OldRect);
+          if (aParams.OldTexture!=NULL)
+            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture, NULL, &OldRect);
           // Copy the texture on the renderer
-          SDL_RenderCopy(aRenderer, CurrentTexture, NULL, &CurrentRect);
+          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture, NULL, &CurrentRect);
           // Update the window surface (show the renderer)
-          SDL_RenderPresent(aRenderer);
+          SDL_RenderPresent(aParams.Renderer);
 
           SDL_Delay(5);
         }
+        long long start=GetTime_us();
+        BlurTexture(aParams.CurrentTexture,20);
+        long long ende=GetTime_us();
+        SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture, NULL, &CurrentRect);
+        SDL_RenderPresent(aParams.Renderer);
+        printf("Blur-Effektdauer :%.2f ms\r\n",double(ende-start)/1000.0);
         break;
       }
     case AlphaMoving:
       {
 
-        check_error_sdl(SDL_SetTextureBlendMode(CurrentTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
-        if (OldTexture!=NULL)
-          check_error_sdl(SDL_SetTextureBlendMode(OldTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+        check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+        if (aParams.OldTexture!=NULL)
+          check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
 
         unsigned char * aPixelsCurrent=NULL;
         int mPitchCurrent=0;
-        check_error_sdl(SDL_LockTexture(CurrentTexture,NULL, (void**)&aPixelsCurrent, &mPitchCurrent),"SDL_LockTexture");
+        check_error_sdl(SDL_LockTexture(aParams.CurrentTexture,NULL, (void**)&aPixelsCurrent, &mPitchCurrent),"SDL_LockTexture");
         const int NumBytesCurrent=mPitchCurrent*CurrentTextureHeight;
         const int Loops=NumBytesCurrent/2;
 
@@ -549,7 +553,7 @@ void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* Cu
           aPixelsCurrent[i+3]=127;
 
 
-        SDL_UnlockTexture(CurrentTexture);
+        SDL_UnlockTexture(aParams.CurrentTexture);
 
         long long start=GetTime_us();
         /*
@@ -560,28 +564,28 @@ void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* Cu
         long long ende=GetTime_us();
 
         unsigned char * aPixelsOld=NULL;
-        if (OldTexture!=NULL)
+        if (aParams.OldTexture!=NULL)
         {
           int mPitchOld=0;
-          check_error_sdl(SDL_LockTexture(OldTexture,NULL, (void**)&aPixelsOld, &mPitchOld),"SDL_LockTexture");
+          check_error_sdl(SDL_LockTexture(aParams.OldTexture,NULL, (void**)&aPixelsOld, &mPitchOld),"SDL_LockTexture");
           const int NumBytesOld=OldTextureHeight*mPitchOld;
           for (int i=0; i<NumBytesOld/2; i+=4)
             aPixelsOld[i+3]=127;
-          SDL_UnlockTexture(OldTexture);
+          SDL_UnlockTexture(aParams.OldTexture);
         }
 
         printf("Effektdauer :%.2f ms\r\n",double(ende-start)/1000.0);
         // Copy the texture on the renderer
-        if (OldTexture!=NULL)
-          SDL_RenderCopy(aRenderer, OldTexture, NULL, &OldRect);
-        SDL_RenderCopy(aRenderer, CurrentTexture, NULL, &CurrentRect);
+        if (aParams.OldTexture!=NULL)
+          SDL_RenderCopy(aParams.Renderer, aParams.OldTexture, NULL, &OldRect);
+        SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture, NULL, &CurrentRect);
 
         // Update the window surface (show the renderer)
-        SDL_RenderPresent(aRenderer);
+        SDL_RenderPresent(aParams.Renderer);
         break;
       }
     case MovingToRight:
-      {
+      {/*
         vector<SDL_Texture*> CurrentTextureStripes=LoadTextureStripes(gCurrentFilename, aRenderer);
         vector<SDL_Texture*> OldTextureStripes;
         for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
@@ -653,10 +657,10 @@ void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* Cu
 
 
           for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
-            SDL_SetTextureAlphaMod( CurrentTextureStripes[i], AlphaVecCurrent[i]/*double(a)/40.0*double(i)/double(CurrentTextureStripes.size())*256*/ );
+            SDL_SetTextureAlphaMod( CurrentTextureStripes[i], AlphaVecCurrent[i] );
 
           for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-            SDL_SetTextureAlphaMod( OldTextureStripes[i], AlphaVecOld[i]/*double(a)/40.0*double(i)/double(OldTextureStripes.size())*256*/ );
+            SDL_SetTextureAlphaMod( OldTextureStripes[i], AlphaVecOld[i] );
 
           for (Uint32 i=0; i<OldTextureStripes.size(); i++)
           {
@@ -685,6 +689,7 @@ void DoBlendEffect(SDL_Renderer* aRenderer, BlendEffect aEffect, SDL_Texture* Cu
           SDL_DestroyTexture(CurrentTextureStripes[i]);
         for (Uint32 i=0; i<OldTextureStripes.size(); i++)
           SDL_DestroyTexture( OldTextureStripes[i]);
+          */
         break;
       }
     case MovingToLeft:

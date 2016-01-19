@@ -8,7 +8,7 @@
 
 struct SDL_Texture;
 
-void BlurTexture(SDL_Texture* pTexture, int r);
+void BlurTexture(SDL_Texture* pTexture, unsigned int r);
 
 /// Funktion für den Gaussian-Blur-Effekt auf einem Graukanal
 /// Ein Graukanal wird als zusammenhängendes Array ohne Padding definiert
@@ -18,11 +18,11 @@ void BlurTexture(SDL_Texture* pTexture, int r);
 /// \param w Bildbreite
 /// \param h Bildhöhe
 /// \param r Blur-Radius
-void gaussBlur_4 (unsigned char *scl, unsigned char* tcl,int scl_length, int w,int h,int r);
+void gaussBlur (unsigned char *scl, unsigned char* tcl, unsigned int scl_length, unsigned int w, unsigned int h, unsigned int r);
 
-std::vector<int> boxesForGauss(int sigma, int n);
-void boxBlur_4 (unsigned char *scl, unsigned char *tcl,int scl_length,int w,int h,int r);
-void boxBlurH_4 (unsigned char *scl, unsigned char *tcl, int scl_length,int w,int h,int r);
-void boxBlurT_4 (unsigned char *scl, unsigned char *tcl, int scl_length, int w,int h,int r);
+std::vector<unsigned int> boxesForGauss(unsigned int sigma, unsigned int n);
+void boxBlur (unsigned char *scl, unsigned char *tcl, unsigned int scl_length, unsigned int w, unsigned int h, unsigned int r);
+void boxBlurH (unsigned char *scl, unsigned char *tcl, unsigned int w, unsigned int h, unsigned int r);
+void boxBlurT (unsigned char *scl, unsigned char *tcl, unsigned int w, unsigned int h, unsigned int r);
 
 #endif // GAUSSIANBLUR_H_INCLUDED
