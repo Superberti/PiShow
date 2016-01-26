@@ -44,6 +44,7 @@
 		<Unit filename="SdlTools.h" />
 		<Unit filename="cb.bmp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="main.h" />
 		<Unit filename="tools.cpp" />
 		<Extensions>
 			<code_completion />

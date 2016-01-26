@@ -10,7 +10,13 @@ class PiShowParams
 public:
   int ScreenWidth;
   int ScreenHeight;
+  int CurrentTextureWidth;
+  int CurrentTextureHeight;
+  int OldTextureWidth;
+  int OldTextureHeight;
   double ScreenAspectRatio;
+  double CurrentTextureAspectRatio;
+  double OldTextureAspectRatio;
   static const int SegmentHeight;
   SDL_Window* Window;
   std::string OldFilename,CurrentFilename;
@@ -21,7 +27,17 @@ public:
   SDL_Texture* OldStripe1Texture;
   SDL_Texture* OldStripe2Texture;
   SDL_Renderer* Renderer;
+  bool CurrentPortraitMode;
+  bool OldPortraitMode;
+  SDL_Rect OldRect;
+  SDL_Rect OldRectStripe1;
+  SDL_Rect OldRectStripe2;
+  SDL_Rect CurrentRect;
+  SDL_Rect CurrentRectStripe1;
+  SDL_Rect CurrentRectStripe2;
+
   PiShowParams();
+  void CalcBorders();
 };
 
 enum BlendEffect
@@ -42,7 +58,7 @@ bool WaitAndCheckForQuit(Uint32 aWaitTime);
 void DoBlendEffect(BlendEffect aEffect, PiShowParams& aParams);
 
 // Load an image from "fname" and return an SDL_Texture with the content of the image
-SDL_Texture* load_texture(const std::string fname, PiShowParams& aParams);
+void LoadTextures(const std::string fname, PiShowParams& aParams);
 //std::vector<SDL_Texture*> LoadTextureStripes(const std::string aFileName, SDL_Renderer *renderer);
 
 struct Arg: public option::Arg
