@@ -78,7 +78,7 @@ void PiShowParams::CalcBorders()
   else
   {
     // Monitor ist breiter als das Bild => Streifen links und rechts
-    CurrentRect.w = ScreenHeight*CurrentTextureAspectRatio;
+    CurrentRect.w = double(ScreenHeight)*CurrentTextureAspectRatio;
     CurrentRect.h = ScreenHeight;
     CurrentRect.x = (ScreenWidth-CurrentRect.w)/2;
     CurrentRect.y = 0;
@@ -90,8 +90,8 @@ void PiShowParams::CalcBorders()
 
     CurrentRectStripe2.w=(ScreenWidth-CurrentRect.w)/2;
     CurrentRectStripe2.h=ScreenHeight;
-    CurrentRectStripe2.x=0;
-    CurrentRectStripe2.y=CurrentRect.x+CurrentRect.w;
+    CurrentRectStripe2.x=CurrentRect.x+CurrentRect.w;
+    CurrentRectStripe2.y=0;
   }
 
   // Unterscheidung: Bild hat einen größeren (breiteren) AspectRatio als der Monitor: => Streifen oben und unten
@@ -116,7 +116,7 @@ void PiShowParams::CalcBorders()
   else
   {
     // Monitor ist breiter als das Bild => Streifen links und rechts
-    OldRect.w = ScreenHeight*OldTextureAspectRatio;
+    OldRect.w = double(ScreenHeight)*OldTextureAspectRatio;
     OldRect.h = ScreenHeight;
     OldRect.x = (ScreenWidth-OldRect.w)/2;
     OldRect.y = 0;
@@ -128,8 +128,8 @@ void PiShowParams::CalcBorders()
 
     OldRectStripe2.w=(ScreenWidth-OldRect.w)/2;
     OldRectStripe2.h=ScreenHeight;
-    OldRectStripe2.x=0;
-    OldRectStripe2.y=OldRect.x+OldRect.w;
+    OldRectStripe2.x=OldRect.x+OldRect.w;
+    OldRectStripe2.y=0;
   }
 }
 
