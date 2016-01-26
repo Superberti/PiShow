@@ -14,7 +14,18 @@ void BlurTexture(SDL_Texture* pTexture, unsigned int r)
   Uint32 mFormat=SDL_PIXELFORMAT_UNKNOWN;
   check_error_sdl(SDL_QueryTexture(pTexture, &mFormat, NULL, &CurrentTextureWidth, &CurrentTextureHeight),"SDL_QueryTexture");
   check_error_sdl(SDL_LockTexture(pTexture,NULL, (void**)&aPixelsCurrent, &mPitchCurrent),"SDL_LockTexture");
-  const int NumBytesCurrent=mPitchCurrent*CurrentTextureHeight;
+  BlurRGBA(CurrentTextureWidth, CurrentTextureHeight, mPitchCurrent, aPixelsCurrent, mFormat, r);
+  SDL_UnlockTexture(pTexture);
+}
+
+void BlurSurface(SDL_Surface* pSurface, unsigned int r)
+{
+  BlurRGBA(pSurface->w, pSurface->h, pSurface->pitch, (unsigned char*)pSurface->pixels, pSurface->format->format, r);
+}
+
+void BlurRGBA(int aWidth, int aHeight, int aPitch, unsigned char * pPixels, Uint32 aPixelFormat, int r)
+{
+  const int NumBytesCurrent=aPitch*aHeight;
   // Aufteilung in einzelne Farbkanäle
   const int ChannelSize=NumBytesCurrent/4;
   unsigned char * rc=new unsigned char[ChannelSize];
@@ -27,27 +38,26 @@ void BlurTexture(SDL_Texture* pTexture, unsigned int r)
   int cc=0;
   for (int i=0; i<NumBytesCurrent; i+=4)
   {
-    bc[cc]=aPixelsCurrent[i];
-    gc[cc]=aPixelsCurrent[i+1];
-    rc[cc]=aPixelsCurrent[i+2];
+    bc[cc]=pPixels[i];
+    gc[cc]=pPixels[i+1];
+    rc[cc]=pPixels[i+2];
 
     bc_d[cc]=bc[cc];
     gc_d[cc]=gc[cc];
     rc_d[cc]=rc[cc];
     cc++;
   }
-  gaussBlur(bc,bc_d,ChannelSize,CurrentTextureWidth,CurrentTextureHeight,r);
-  gaussBlur(gc,gc_d,ChannelSize,CurrentTextureWidth,CurrentTextureHeight,r);
-  gaussBlur(rc,rc_d,ChannelSize,CurrentTextureWidth,CurrentTextureHeight,r);
+  gaussBlur(bc,bc_d,ChannelSize,aWidth,aHeight,r);
+  gaussBlur(gc,gc_d,ChannelSize,aWidth,aHeight,r);
+  gaussBlur(rc,rc_d,ChannelSize,aWidth,aHeight,r);
   cc=0;
   for (int i=0; i<NumBytesCurrent; i+=4)
   {
-    aPixelsCurrent[i]=bc_d[cc];
-    aPixelsCurrent[i+1]=gc_d[cc];
-    aPixelsCurrent[i+2]=rc_d[cc];
+    pPixels[i]=bc_d[cc];
+    pPixels[i+1]=gc_d[cc];
+    pPixels[i+2]=rc_d[cc];
     cc++;
   }
-  SDL_UnlockTexture(pTexture);
   delete[] rc;
   delete[] gc;
   delete[] bc;

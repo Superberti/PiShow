@@ -400,7 +400,7 @@ void LoadTextures(const std::string aFileName, PiShowParams& aParams)
     // Texturen für die Ränder anlegen, die dann mit blur unscharf dargestellt werden
     Stripe1 = SDL_CreateRGBSurface(0, aParams.CurrentRectStripe1.w, aParams.CurrentRectStripe1.h, 32,  0, 0, 0, 0);
     check_error_sdl(Stripe1 == NULL, "SDL_CreateRGBSurface stripe1 failed");
-    Stripe2 = SDL_CreateRGBSurface(0, aParams.CurrentRectStripe1.w, aParams.CurrentRectStripe1.h, 32,  0, 0, 0, 0);
+    Stripe2 = SDL_CreateRGBSurface(0, aParams.CurrentRectStripe2.w, aParams.CurrentRectStripe2.h, 32,  0, 0, 0, 0);
     check_error_sdl(Stripe2 == NULL, "SDL_CreateRGBSurface stripe2 failed");
 
     // Textur oben bzw. links
@@ -419,7 +419,8 @@ void LoadTextures(const std::string aFileName, PiShowParams& aParams)
       SrcRectStripe1.x=0;
       SrcRectStripe1.y=0;
     }
-    SDL_BlitScaled(formattedSurface, &SrcRectStripe1, Stripe1, &aParams.CurrentRectStripe1);
+    SDL_BlitScaled(formattedSurface, &SrcRectStripe1, Stripe1, NULL);
+    BlurSurface(Stripe1, 10);
     aParams.CurrentStripe1Texture = SDL_CreateTextureFromSurface(aParams.Renderer, Stripe1);
     check_error_sdl(aParams.CurrentStripe1Texture == NULL, "SDL_CreateTextureFromSurface aParams.CurrentStripe1Texture failed.");
 
@@ -439,7 +440,8 @@ void LoadTextures(const std::string aFileName, PiShowParams& aParams)
       SrcRectStripe2.x=0;
       SrcRectStripe2.y=formattedSurface->h-SrcRectStripe2.h;
     }
-    SDL_BlitScaled(formattedSurface, &SrcRectStripe2, Stripe2, &aParams.CurrentRectStripe2);
+    SDL_BlitScaled(formattedSurface, &SrcRectStripe2, Stripe2, NULL);
+    BlurSurface(Stripe2, 10);
     aParams.CurrentStripe2Texture = SDL_CreateTextureFromSurface(aParams.Renderer, Stripe2);
     check_error_sdl(aParams.CurrentStripe2Texture == NULL, "SDL_CreateTextureFromSurface aParams.CurrentStripe2Texture failed.");
 
@@ -462,61 +464,6 @@ void LoadTextures(const std::string aFileName, PiShowParams& aParams)
   SDL_FreeSurface(formattedSurface);
   delete[] pImage;
 }
-/*
-// Load an image from "fname" and return an SDL_Texture with the content of the image
-vector<SDL_Texture*> LoadTextureStripes(const std::string aFileName, SDL_Renderer *renderer)
-{
-  int Height=0;
-  int Width=0;
-  int RawDataLength=0;
-  unsigned char* pImage=NULL;
-  SDL_Surface *image=NULL;
-  vector<SDL_Texture *>img_textures;
-  SDL_Texture *img_texture;
-
-  int mPitch=0;
-
-  try
-  {
-    pImage=GetImage(aFileName,Width,Height,RawDataLength);
-    // Ist das Bild größer als die maximale Texturgröße (2048x2048)?
-    if (Width>2048 || Height>2048)
-      throw runtime_error(strprintf("Image dimensions exceeding max. texture size (2048x2048). Width=%d Height=%d",Width,Height));
-    mPitch=4*Width;
-    for (int y=0; y<Height-gSegmentHeight; y+=gSegmentHeight)
-    {
-      image = SDL_CreateRGBSurfaceFrom(pImage+y*mPitch,
-                                       Width,
-                                       gSegmentHeight,
-                                       32,
-                                       mPitch,
-                                       0,
-                                       0,
-                                       0,
-                                       0);
-
-      check_error_sdl(image == NULL, "SDL_CreateRGBSurfaceFrom failed");
-
-      img_texture = SDL_CreateTextureFromSurface(renderer, image);
-      check_error_sdl(img_texture == NULL, "SDL_CreateTextureFromSurface failed.");
-      SDL_FreeSurface(image);
-      image=NULL;
-      img_textures.push_back(img_texture);
-    }
-  }
-  catch (exception & Err)
-  {
-    if (image!=NULL)
-      SDL_FreeSurface(image);
-    if (pImage!=NULL)
-      delete[] pImage;
-    throw;
-  }
-  if (image!=NULL)
-    SDL_FreeSurface(image);
-  delete[] pImage;
-  return img_textures;
-}*/
 
 unsigned char* GetImage(const std::string aFileName, int & width, int & height, int & aRawDataLength)
 {
@@ -619,14 +566,6 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
           check_error_sdl(SDL_SetTextureBlendMode(aParams.OldStripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode OldStripe1Texture");
         if (aParams.OldStripe2Texture!=NULL)
           check_error_sdl(SDL_SetTextureBlendMode(aParams.OldStripe2Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode OldStripe2Texture");
-/*
-        long long start=GetTime_us();
-        BlurTexture(aParams.CurrentStripe1Texture,20);
-        BlurTexture(aParams.CurrentStripe2Texture,20);
-        long long ende=GetTime_us();
-        //SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture, NULL, &aParams.CurrentRect);
-        //SDL_RenderPresent(aParams.Renderer);
-        printf("Blur-Effektdauer :%.2f ms\r\n",double(ende-start)/1000.0);*/
 
         const int NumSteps=255;
         for (int i=0; i<=NumSteps; i+=2)
@@ -641,7 +580,7 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
             SDL_SetTextureAlphaMod( aParams.OldStripe1Texture, NumSteps-i );
           if (aParams.OldStripe2Texture!=NULL)
             SDL_SetTextureAlphaMod( aParams.OldStripe2Texture, NumSteps-i );
-/*
+
           if (aParams.OldTexture!=NULL)
             SDL_RenderCopy(aParams.Renderer, aParams.OldTexture, NULL, &aParams.OldRect);
           if (aParams.OldStripe1Texture!=NULL)
@@ -650,20 +589,13 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
             SDL_RenderCopy(aParams.Renderer, aParams.OldStripe2Texture, NULL, &aParams.OldRectStripe2);
           // Copy the texture on the renderer
           SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture, NULL, &aParams.CurrentRect);
-          SDL_RenderCopy(aParams.Renderer, aParams.CurrentStripe1Texture, NULL, &aParams.CurrentRectStripe1);*/
+          SDL_RenderCopy(aParams.Renderer, aParams.CurrentStripe1Texture, NULL, &aParams.CurrentRectStripe1);
           SDL_RenderCopy(aParams.Renderer, aParams.CurrentStripe2Texture, NULL, &aParams.CurrentRectStripe2);
           // Update the window surface (show the renderer)
           SDL_RenderPresent(aParams.Renderer);
 
           SDL_Delay(5);
         }
-        /*
-        long long start=GetTime_us();
-        BlurTexture(aParams.CurrentTexture,20);
-        long long ende=GetTime_us();
-        SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture, NULL, &aParams.CurrentRect);
-        SDL_RenderPresent(aParams.Renderer);
-        printf("Blur-Effektdauer :%.2f ms\r\n",double(ende-start)/1000.0);*/
         break;
       }
     case AlphaMoving:
@@ -715,111 +647,7 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
         break;
       }
     case MovingToRight:
-      {/*
-        vector<SDL_Texture*> CurrentTextureStripes=LoadTextureStripes(gCurrentFilename, aRenderer);
-        vector<SDL_Texture*> OldTextureStripes;
-        for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
-          check_error_sdl(SDL_SetTextureBlendMode(CurrentTextureStripes[i], SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
-
-        if (!gOldFilename.empty())
-        {
-          OldTextureStripes=LoadTextureStripes(gOldFilename, aRenderer);
-          for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-            check_error_sdl(SDL_SetTextureBlendMode(OldTextureStripes[i], SDL_BLENDMODE_BLEND),"Setting alpha blend mode old texture");
-        }
-
-        vector<unsigned char> AlphaVecCurrent(CurrentTextureStripes.size());
-        vector<unsigned char> AlphaVecOld(OldTextureStripes.size());
-        const Uint32 AlphaSteps=40;
-        const Uint32 HalfAlphaSteps=AlphaSteps/2;
-        double AlphaStart,AlphaEnd;
-
-        for (Uint32 a=0; a<AlphaSteps; a++)
-        {
-          // Berechnung der Textur-Alphawerte
-          if (a<HalfAlphaSteps)
-          {
-            AlphaStart=0;
-            AlphaEnd=double(a)/HalfAlphaSteps*255;
-          }
-          else
-          {
-            AlphaStart=double(a-HalfAlphaSteps)/HalfAlphaSteps*255;
-            AlphaEnd=255;
-          }
-
-          double da=double(a)/AlphaSteps;
-
-          for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
-          {
-            if (double(i)/CurrentTextureStripes.size()<da+0.1)
-            {
-              AlphaVecCurrent.at(i)=255;
-            }
-            else if (double(i)/CurrentTextureStripes.size()>da+0.3)
-            {
-              AlphaVecCurrent.at(i)=0;
-            }
-            else
-            {
-              AlphaVecCurrent.at(i)=127;
-            }
-            //AlphaVecCurrent.at(i)=AlphaStart+(AlphaEnd-AlphaStart)*double(i)/CurrentTextureStripes.size();
-          }
-          for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-          {
-            if (double(i)/OldTextureStripes.size()<da+0.1)
-            {
-              AlphaVecOld.at(i)=0;
-            }
-            else if (double(i)/OldTextureStripes.size()>da+0.3)
-            {
-              AlphaVecOld.at(i)=255;
-            }
-            else
-            {
-              AlphaVecOld.at(i)=127;
-            }
-            //AlphaVecCurrent.at(i)=AlphaStart+(AlphaEnd-AlphaStart)*double(i)/CurrentTextureStripes.size();
-          }
-          //for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-          //AlphaVecOld.at(i)=255-(AlphaStart+(AlphaEnd-AlphaStart)*double(i)/OldTextureStripes.size());
-
-
-          for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
-            SDL_SetTextureAlphaMod( CurrentTextureStripes[i], AlphaVecCurrent[i] );
-
-          for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-            SDL_SetTextureAlphaMod( OldTextureStripes[i], AlphaVecOld[i] );
-
-          for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-          {
-            OldRect.x = 0;
-            OldRect.y = i*gSegmentHeight;
-            OldRect.w = gScreenWidth;
-            OldRect.h = gSegmentHeight;
-
-            SDL_RenderCopy(aRenderer, OldTextureStripes[i], NULL, &OldRect);
-          }
-
-          for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
-          {
-            CurrentRect.x = 0;
-            CurrentRect.y = i*gSegmentHeight;
-            CurrentRect.w = gScreenWidth;
-            CurrentRect.h = gSegmentHeight;
-
-            SDL_RenderCopy(aRenderer, CurrentTextureStripes[i], NULL, &CurrentRect);
-          }
-          SDL_RenderPresent(aRenderer);
-          SDL_Delay(50);
-        }
-        //sleep(5);
-        for (Uint32 i=0; i<CurrentTextureStripes.size(); i++)
-          SDL_DestroyTexture(CurrentTextureStripes[i]);
-        for (Uint32 i=0; i<OldTextureStripes.size(); i++)
-          SDL_DestroyTexture( OldTextureStripes[i]);
-          */
+      {
         break;
       }
     case MovingToLeft:
