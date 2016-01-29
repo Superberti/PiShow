@@ -37,6 +37,9 @@ errMsg()
 CONV_DIRNAME="conv"
 for InputFile in $*
 do 
+  WIDTH=`identify -format "%w" $InputFile`
+  HEIGHT=`identify -format "%h" $InputFile`
+  
   outfile=$(basename "$InputFile")
   EXT="${outfile##*.}"
 #  echo EXT:$EXT
@@ -49,10 +52,12 @@ do
   outfile=${DIR}/${CONV_DIRNAME}/conv_${OUT_WO_EXT}.${EXT}
   echo Bearbeite $InputFile nach $outfile
   test=`identify -format '%[exif:orientation]' $InputFile`
-  echo Format:$test
-  if [ $test -eq 1 ]; then
+#  echo Format:$test
+  if [ $test -eq 1 -a $WIDTH -gt $HEIGHT ]; then
+    echo "Bild im Querformat."
     convert $InputFile -auto-orient -ordered-dither o8x8,64,64,64 -quality 97 -resize 1920x $outfile
   else
+    echo "Bild im Hochformat"
     convert $InputFile -auto-orient -ordered-dither o8x8,64,64,64 -quality 97 -resize x1200 $outfile
   fi
 done
