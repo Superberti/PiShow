@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="~/SdlTest/bin/Debug/*.JPG" />
+				<Option parameters="~/konvertiert/hoch_klein.jpg" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -31,7 +31,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add option="`sdl2-config --cflags`" />
+			<Add option="`sdl2-config --cflags` -std=c++11" />
 			<Add directory="/opt/libjpeg-turbo/include/" />
 		</Compiler>
 		<Linker>
