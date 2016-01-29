@@ -34,11 +34,25 @@ errMsg()
 # test that outfile provided
 #[ "$outfile" = "" ] && errMsg "NO OUTPUT FILE SPECIFIED"
 
+
+
 CONV_DIRNAME="conv"
 for InputFile in $*
 do 
-  WIDTH=`identify -format "%w" $InputFile`
-  HEIGHT=`identify -format "%h" $InputFile`
+  # get some EXIF information
+  mapfile -t EXIFARGS < <(exiftool -s -s -s -n -ImageWidth -ImageHeight -Orientation -ImageDescription $InputFile)
+  
+  WIDTH=${EXIFARGS[0]}
+  HEIGHT=${EXIFARGS[1]}
+  ORIENTATION=${EXIFARGS[2]}
+  IMG_DESC=${EXIFARGS[3]}
+
+  echo Bildbreite   : $WIDTH
+  echo Bildhöhe     : $HEIGHT
+  echo Orientierung : $ORIENTATION
+  echo Bildbeschr.  : $IMG_DESC
+#  WIDTH=`identify -format "%w" $InputFile`
+#  HEIGHT=`identify -format "%h" $InputFile`
   
   outfile=$(basename "$InputFile")
   EXT="${outfile##*.}"
@@ -51,9 +65,9 @@ do
   fi
   outfile=${DIR}/${CONV_DIRNAME}/conv_${OUT_WO_EXT}.${EXT}
   echo Bearbeite $InputFile nach $outfile
-  test=`identify -format '%[exif:orientation]' $InputFile`
+#  test=`identify -format '%[exif:orientation]' $InputFile`
 #  echo Format:$test
-  if [ $test -eq 1 -a $WIDTH -gt $HEIGHT ]; then
+  if [ $ORIENTATION -eq 1 -a $WIDTH -gt $HEIGHT ]; then
     echo "Bild im Querformat."
     convert $InputFile -auto-orient -ordered-dither o8x8,64,64,64 -quality 97 -resize 1920x $outfile
   else

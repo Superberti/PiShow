@@ -253,6 +253,7 @@ int main(int argc, char** argv)
           delete gParams.OldTexture;
         }
         gParams.OldTexture=gParams.CurrentTexture;
+        gParams.CurrentTexture=NULL;
 
       }
       catch (exception& aErr)
