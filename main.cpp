@@ -283,8 +283,6 @@ int main(int argc, char** argv)
         gParams.OldStripe2Texture=gParams.CurrentStripe2Texture;
         gParams.OldFilename=gParams.CurrentFilename;
 
-
-
       }
       catch (exception& aErr)
       {
@@ -342,6 +340,7 @@ bool WaitAndCheckForQuit(Uint32 aWaitTime_ms)
 // Load an image from "fname" and return an SDL_Texture with the content of the image
 void LoadTextures(const std::string aFileName, PiShowParams& aParams)
 {
+  long long start=GetTime_us();
   int Height=0;
   int Width=0;
   int RawDataLength=0;
@@ -462,7 +461,11 @@ void LoadTextures(const std::string aFileName, PiShowParams& aParams)
   }
   SDL_FreeSurface(image);
   SDL_FreeSurface(formattedSurface);
+  SDL_FreeSurface(Stripe1);
+  SDL_FreeSurface(Stripe2);
   delete[] pImage;
+  long long ende=GetTime_us();
+  printf("Ladezeit des Bildes :%.2f ms\r\n",double(ende-start)/1000.0);
 }
 
 unsigned char* GetImage(const std::string aFileName, int & width, int & height, int & aRawDataLength)
