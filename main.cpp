@@ -70,7 +70,7 @@ void ImageTexture::CalcBorders()
 
   TextureAspectRatio=double(TextureWidth)/TextureHeight;
 
-  PortraitMode=TextureHeight>TextureWidth;
+  PortraitMode=TextureAspectRatio<PiShowParams::ScreenAspectRatio;
 
   // Unterscheidung: Bild hat einen größeren (breiteren) AspectRatio als der Monitor: => Streifen oben und unten
   if (TextureAspectRatio>PiShowParams::ScreenAspectRatio)
@@ -298,6 +298,9 @@ bool WaitAndCheckForQuit(Uint32 aWaitTime_ms)
           /* Quit */
           quit = true;
           break;
+        case SDL_KEYDOWN:
+          quit=event.key.keysym.sym==SDLK_q;
+        break;
       }
     }
     SDL_Delay(10);
