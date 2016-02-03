@@ -555,14 +555,25 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
             SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe1Texture, NumSteps-i );
             SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe2Texture, NumSteps-i );
 
-            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &aParams.OldTexture->ScreenRect);
-            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1);
-            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2);
+            SDL_Rect osr=aParams.OldTexture->ScreenRect;
+            osr.x--;
+            osr.y--;
+            osr.h+=2;
+            osr.w+=2;
+
+            SDL_RenderCopyEx(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1,0.0,NULL,SDL_FLIP_HORIZONTAL);
+            SDL_RenderCopyEx(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2,0.0,NULL,SDL_FLIP_HORIZONTAL);
+            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &osr/*&aParams.OldTexture->ScreenRect*/);
           }
           // Copy the texture on the renderer
-          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &aParams.CurrentTexture->ScreenRect);
-          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1);
-          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2);
+          SDL_RenderCopyEx(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1,0.0,NULL,SDL_FLIP_HORIZONTAL);
+          SDL_RenderCopyEx(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2,0.0,NULL,SDL_FLIP_HORIZONTAL);
+          SDL_Rect sr=aParams.CurrentTexture->ScreenRect;
+          sr.x--;
+          sr.y--;
+          sr.h+=2;
+          sr.w+=2;
+          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &sr/*&aParams.CurrentTexture->ScreenRect*/);
           // Update the window surface (show the renderer)
           SDL_RenderPresent(aParams.Renderer);
 
