@@ -1,0 +1,121 @@
+# depslib dependency file v1.0
+1452028621 source:/home/pi/SdlTest/main.cpp
+	<SDL2/SDL.h>
+	<SDL2/SDL_opengles2.h>
+	<SDL2/SDL_image.h>
+	<iostream>
+	<turbojpeg.h>
+	<iostream>
+	<stdio.h>
+	<stdlib.h>
+	<sys/stat.h>
+	<assert.h>
+	<errno.h>
+	<stdexcept>
+	<sys/time.h>
+	<unistd.h>
+	"main.h"
+
+1452026434 /home/pi/SdlTest/main.h
+	<string>
+	"optionparser.h"
+	"tools.h"
+
+1449672360 /home/pi/SdlTest/optionparser.h
+	<intrin.h>
+
+1449672367 /home/pi/SdlTest/tools.h
+	<exception>
+	<string>
+	<errno.h>
+	<vector>
+	<sstream>
+	<limits.h>
+	<stdarg.h>
+
+1449672367 source:/home/pi/SdlTest/tools.cpp
+	<exception>
+	<iostream>
+	"tools.h"
+	<sys/time.h>
+	<stdio.h>
+	<stdlib.h>
+	<stdarg.h>
+	<string.h>
+	<unistd.h>
+
+1452268650 /opt/libjpeg-turbo/include//turbojpeg.h
+
+1452780614 source:/home/pi/PiShow/tools.cpp
+	<exception>
+	<iostream>
+	"tools.h"
+	<sys/time.h>
+	<stdio.h>
+	<stdlib.h>
+	<stdarg.h>
+	<string.h>
+	<unistd.h>
+
+1452780614 /home/pi/PiShow/tools.h
+	<exception>
+	<string>
+	<errno.h>
+	<vector>
+	<sstream>
+	<limits.h>
+	<stdarg.h>
+
+1454592387 source:/home/pi/PiShow/main.cpp
+	<SDL2/SDL.h>
+	<SDL2/SDL_opengles2.h>
+	<SDL2/SDL_image.h>
+	<iostream>
+	<turbojpeg.h>
+	<iostream>
+	<stdio.h>
+	<stdlib.h>
+	<sys/stat.h>
+	<assert.h>
+	<errno.h>
+	<stdexcept>
+	<sys/time.h>
+	<unistd.h>
+	"main.h"
+	"GaussianBlur.h"
+	"SdlTools.h"
+	<dirent.h>
+
+1454591168 /home/pi/PiShow/main.h
+	<string>
+	"optionparser.h"
+	"tools.h"
+
+1452780589 /home/pi/PiShow/optionparser.h
+	<intrin.h>
+
+1454586693 /home/pi/PiShow/GaussianBlur.h
+	<math.h>
+	<stdio.h>
+	<vector>
+	<string>
+
+1454587844 source:/home/pi/PiShow/GaussianBlur.cpp
+	"GaussianBlur.h"
+	<SDL2/SDL.h>
+	<stdexcept>
+	"SdlTools.h"
+	"tools.h"
+
+1452863982 /home/pi/PiShow/SdlTools.h
+
+1452863901 source:/home/pi/PiShow/SdlTools.cpp
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<errno.h>
+	<stdexcept>
+	"SdlTools.h"
+	<string>
+	<SDL2/SDL.h>
+
