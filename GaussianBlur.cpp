@@ -1,8 +1,49 @@
 #include "GaussianBlur.h"
 #include <SDL2/SDL.h>
+#include <stdexcept>
 #include "SdlTools.h"
+#include "tools.h"
 
 using namespace std;
+
+/// Surface spiegeln
+void FlipSurface(SDL_Surface* pSurface, bool aFlipHorizontal)
+{
+  int bpp=SDL_BITSPERPIXEL(pSurface->format->format);
+  if (bpp!=32)
+    throw runtime_error(strprintf("Invalid pixel format for FlipSurface: %s. Bpp: %d",SDL_GetPixelFormatName(pSurface->format->format),bpp));
+  if (!aFlipHorizontal)
+  {
+    // Spiegelung an der horizontalen(!) Achse. Eigentlich ist die Bezeichnung verwirrend, aber kompatibel mit der libSDL
+    unsigned char* pBuffer=new unsigned char[pSurface->pitch];
+    for (int y=0;y<pSurface->h/2;y++)
+    {
+      // temporäre Kopie einer Zeile in den Puffer
+      memcpy(pBuffer,(unsigned char *)(pSurface->pixels)+(pSurface->h-y-1)*pSurface->pitch,pSurface->pitch);
+      // von oben nach unten Kopieren
+      memcpy((unsigned char *)(pSurface->pixels)+(pSurface->h-y-1)*pSurface->pitch,(unsigned char *)(pSurface->pixels)+y*pSurface->pitch,pSurface->pitch);
+      // Zum Schluss Kopie von unten nach oben kopieren
+      memcpy((unsigned char *)(pSurface->pixels)+y*pSurface->pitch,pBuffer,pSurface->pitch);
+    }
+    delete[] pBuffer;
+  }
+  else
+  {
+    Uint32 Buf;
+    // Spiegelung an der vertikalen Achse
+    for (int y=0;y<pSurface->h;y++)
+    {
+      unsigned char *pB=(unsigned char *)(pSurface->pixels)+y*pSurface->pitch;
+      Uint32 *pStart=(Uint32*)pB;
+      for (int x=0;x<pSurface->w/2;x++)
+      {
+        Buf=pStart[pSurface->w-x-1];
+        pStart[pSurface->w-x-1]=pStart[x];
+        pStart[x]=Buf;
+      }
+    }
+  }
+}
 
 /// wendet den Blur-Effekt auf eine Textur an
 void BlurTexture(SDL_Texture* pTexture, unsigned int r)

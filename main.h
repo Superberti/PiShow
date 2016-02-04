@@ -54,6 +54,10 @@ enum BlendEffect
   LastEffect,
 };
 
+std::vector<std::string> ExpandFileNames(const std::vector<std::string> & aDirsOrFileNames);
+
+std::vector<std::string> FindFilesInDir(const std::string & aDir);
+
 unsigned char* GetImage(std::string aFileName, int & width, int & height, int & aRawDataSize);
 
 bool WaitAndCheckForQuit(Uint32 aWaitTime);

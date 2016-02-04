@@ -15,6 +15,7 @@
 #include "main.h"
 #include "GaussianBlur.h"
 #include "SdlTools.h"
+#include <dirent.h>
 
 using namespace std;
 
@@ -33,10 +34,14 @@ PiShowParams::PiShowParams()
 
 void PiShowParams::Cleanup()
 {
-  delete CurrentTexture;CurrentTexture=NULL;
-  delete OldTexture;OldTexture=NULL;
-  SDL_DestroyRenderer(Renderer);Renderer=NULL;
-  SDL_DestroyWindow(Window);Window=NULL;
+  delete CurrentTexture;
+  CurrentTexture=NULL;
+  delete OldTexture;
+  OldTexture=NULL;
+  SDL_DestroyRenderer(Renderer);
+  Renderer=NULL;
+  SDL_DestroyWindow(Window);
+  Window=NULL;
 
 }
 
@@ -158,8 +163,16 @@ int main(int argc, char** argv)
   for (option::Option* opt = options[UNKNOWN]; opt; opt = opt->next())
     std::cout << "Unknown option: " << opt->name << "\n";
 
+  vector<string> iDirsOrFiles;
+
   for (int i = 0; i < parse.nonOptionsCount(); ++i)
-    std::cout << "Non-option #" << i << ": " << parse.nonOption(i) << "\n";
+    iDirsOrFiles.push_back(parse.nonOption(i));
+
+  vector<string> iFileNames=ExpandFileNames(iDirsOrFiles);
+  printf("Anzahl anzuzeigender Dateien: %d\r\n",iFileNames.size());
+  for (unsigned int i=0;i<iFileNames.size();i++)
+    printf("%s\r\n",iFileNames[i].c_str());
+    //std::cout << "Non-option #" << i << ": " << parse.nonOption(i) << "\n";
 
   // Initialize SDL
   check_error_sdl(SDL_Init(SDL_INIT_VIDEO) != 0, "Unable to initialize SDL");
@@ -193,12 +206,14 @@ int main(int argc, char** argv)
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+
+  SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "1" );
   //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
 
   // Create and initialize a 800x600 window
   gParams.Window = SDL_CreateWindow("Test SDL 2", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                             gParams.ScreenWidth, gParams.ScreenHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+                                    gParams.ScreenWidth, gParams.ScreenHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
   check_error_sdl(gParams.Window == NULL, "Unable to create window");
 
   // Create and initialize a hardware accelerated renderer that will be refreshed in sync with your monitor (at approx. 60 Hz)
@@ -234,12 +249,12 @@ int main(int argc, char** argv)
   do
   {
     ErrCount=0;
-    for (int i = 0; i < parse.nonOptionsCount(); ++i)
+    for (unsigned int i = 0; i < iFileNames.size(); ++i)
     {
       try
       {
         gParams.CurrentTexture=new ImageTexture();
-        gParams.CurrentTexture->ImageFilename=parse.nonOption(i);
+        gParams.CurrentTexture->ImageFilename=iFileNames[i];
 
         LoadTextures(gParams);
 
@@ -300,7 +315,7 @@ bool WaitAndCheckForQuit(Uint32 aWaitTime_ms)
           break;
         case SDL_KEYDOWN:
           quit=event.key.keysym.sym==SDLK_q;
-        break;
+          break;
       }
     }
     SDL_Delay(10);
@@ -325,26 +340,35 @@ void LoadTextures(PiShowParams& aParams)
 
   void* mPixels=NULL;
   int mPitch=0;
+  Uint32 rmask, gmask, bmask, amask;
+
+  /* SDL interprets each pixel as a 32-bit number, so our masks must depend
+     on the endianness (byte order) of the machine */
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+  rmask = 0xff000000;
+  gmask = 0x00ff0000;
+  bmask = 0x0000ff00;
+  amask = 0x000000ff;
+#else
+  rmask = 0x000000ff;
+  gmask = 0x0000ff00;
+  bmask = 0x00ff0000;
+  amask = 0xff000000;
+#endif
+
   try
   {
     pImage=GetImage(aParams.CurrentTexture->ImageFilename,Width,Height,RawDataLength);
     // Ist das Bild größer als die maximale Texturgröße (2048x2048)?
     if (Width>2048 || Height>2048)
       throw runtime_error(strprintf("Image dimensions exceeding max. texture size (2048x2048). Width=%d Height=%d",Width,Height));
-    image = SDL_CreateRGBSurfaceFrom(pImage,
-                                     Width,
-                                     Height,
-                                     32,
-                                     4*Width,
-                                     0,
-                                     0,
-                                     0,
-                                     0);
+    image = SDL_CreateRGBSurfaceFrom(pImage, Width, Height, 32, 4*Width, bmask, gmask, rmask, amask);
 
     check_error_sdl(image == NULL, "SDL_CreateRGBSurfaceFrom failed");
     Uint32 format = SDL_GetWindowPixelFormat(aParams.Window);
     if (format==SDL_PIXELFORMAT_UNKNOWN)
       throw runtime_error( "Unable to get pixel format! SDL Error: " + string(SDL_GetError() ));
+    printf("Window pixel format: %s\r\n",SDL_GetPixelFormatName(format));
     //Convert surface to display format
 //    WindowSurface=SDL_GetWindowSurface( gWindow );
     //  if( WindowSurface == NULL )
@@ -370,9 +394,9 @@ void LoadTextures(PiShowParams& aParams)
     // Bildränder berechnen
     aParams.CurrentTexture->CalcBorders();
     // Texturen für die Ränder anlegen, die dann mit blur unscharf dargestellt werden
-    Stripe1 = SDL_CreateRGBSurface(0, aParams.CurrentTexture->ScreenRectStripe1.w, aParams.CurrentTexture->ScreenRectStripe1.h, 32,  0, 0, 0, 0);
+    Stripe1 = SDL_CreateRGBSurface(0, aParams.CurrentTexture->ScreenRectStripe1.w, aParams.CurrentTexture->ScreenRectStripe1.h, 32,  bmask, gmask, rmask, amask);
     check_error_sdl(Stripe1 == NULL, "SDL_CreateRGBSurface stripe1 failed");
-    Stripe2 = SDL_CreateRGBSurface(0, aParams.CurrentTexture->ScreenRectStripe2.w, aParams.CurrentTexture->ScreenRectStripe2.h, 32,  0, 0, 0, 0);
+    Stripe2 = SDL_CreateRGBSurface(0, aParams.CurrentTexture->ScreenRectStripe2.w, aParams.CurrentTexture->ScreenRectStripe2.h, 32,  bmask, gmask, rmask, amask);
     check_error_sdl(Stripe2 == NULL, "SDL_CreateRGBSurface stripe2 failed");
 
     // Textur oben bzw. links
@@ -393,6 +417,7 @@ void LoadTextures(PiShowParams& aParams)
     }
     SDL_BlitScaled(formattedSurface, &SrcRectStripe1, Stripe1, NULL);
     BlurSurface(Stripe1, 10);
+    FlipSurface(Stripe1,aParams.CurrentTexture->PortraitMode);
     aParams.CurrentTexture->Stripe1Texture = SDL_CreateTextureFromSurface(aParams.Renderer, Stripe1);
     check_error_sdl(aParams.CurrentTexture->Stripe1Texture == NULL, "SDL_CreateTextureFromSurface aParams.CurrentStripe1Texture failed.");
 
@@ -414,6 +439,7 @@ void LoadTextures(PiShowParams& aParams)
     }
     SDL_BlitScaled(formattedSurface, &SrcRectStripe2, Stripe2, NULL);
     BlurSurface(Stripe2, 10);
+    FlipSurface(Stripe2,aParams.CurrentTexture->PortraitMode);
     aParams.CurrentTexture->Stripe2Texture = SDL_CreateTextureFromSurface(aParams.Renderer, Stripe2);
     check_error_sdl(aParams.CurrentTexture->Stripe2Texture == NULL, "SDL_CreateTextureFromSurface aParams.CurrentStripe2Texture failed.");
 
@@ -454,9 +480,25 @@ unsigned char* GetImage(const std::string aFileName, int & width, int & height, 
   tjhandle _jpegDecompressor=NULL;
   FILE *fp=NULL;
   unsigned int s=0;
+  int status;
+  struct stat st_buf;
 
   try
   {
+
+    // Get the status of the file system object.
+    status = stat (aFileName.c_str(), &st_buf);
+    if (status != 0)
+    {
+      int error=errno;
+      std::string ErrorMsg=GetOsErrString(error);
+      throw std::runtime_error(strprintf( "Could not stat image file \"%s\": %s.",aFileName.c_str(),ErrorMsg.c_str()));
+    }
+
+
+    if (S_ISDIR (st_buf.st_mode))
+      throw std::runtime_error(strprintf( "File \"%s\" is a directory!",aFileName.c_str()));
+
     fp = fopen(aFileName.c_str(), "rb");
     if (fp==NULL)
     {
@@ -487,7 +529,12 @@ unsigned char* GetImage(const std::string aFileName, int & width, int & height, 
   }
   catch (std::exception & err)
   {
-
+    if (fp!=NULL)
+      fclose(fp);
+    if (_jpegDecompressor!=NULL)
+      tjDestroy(_jpegDecompressor);
+    delete[] _compressedImage;
+    throw;
   }
   if (fp!=NULL)
     fclose(fp);
@@ -561,19 +608,25 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
             osr.h+=2;
             osr.w+=2;
 
-            SDL_RenderCopyEx(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1,0.0,NULL,SDL_FLIP_HORIZONTAL);
-            SDL_RenderCopyEx(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2,0.0,NULL,SDL_FLIP_HORIZONTAL);
-            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &osr/*&aParams.OldTexture->ScreenRect*/);
+            //SDL_RenderCopyEx(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1,0.0,NULL,SDL_FLIP_HORIZONTAL);
+            //SDL_RenderCopyEx(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2,0.0,NULL,SDL_FLIP_HORIZONTAL);
+            //SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &osr/*&aParams.OldTexture->ScreenRect*/);
+            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1);
+            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2);
+            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &aParams.OldTexture->ScreenRect);
           }
           // Copy the texture on the renderer
-          SDL_RenderCopyEx(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1,0.0,NULL,SDL_FLIP_HORIZONTAL);
-          SDL_RenderCopyEx(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2,0.0,NULL,SDL_FLIP_HORIZONTAL);
+          //SDL_RenderCopyEx(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1,0.0,NULL,SDL_FLIP_HORIZONTAL);
+          //SDL_RenderCopyEx(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2,0.0,NULL,SDL_FLIP_HORIZONTAL);
+          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1);
+          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2);
           SDL_Rect sr=aParams.CurrentTexture->ScreenRect;
           sr.x--;
           sr.y--;
           sr.h+=2;
           sr.w+=2;
-          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &sr/*&aParams.CurrentTexture->ScreenRect*/);
+          //SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &sr/*&aParams.CurrentTexture->ScreenRect*/);
+          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &aParams.CurrentTexture->ScreenRect);
           // Update the window surface (show the renderer)
           SDL_RenderPresent(aParams.Renderer);
 
@@ -598,4 +651,62 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
         break;
       }
   }
+}
+
+vector<string> ExpandFileNames(const vector<string> & aDirsOrFileNames)
+{
+  vector<string> iFileNames;
+  struct stat st_buf;
+  int status;
+  for (unsigned int i=0; i<aDirsOrFileNames.size(); i++)
+  {
+    // Feststellen: Datei oder Verzeichnis?
+    try
+    {
+      // Get the status of the file system object.
+      status = stat (aDirsOrFileNames[i].c_str(), &st_buf);
+      if (status != 0)
+      {
+        int error=errno;
+        std::string ErrorMsg=GetOsErrString(error);
+        throw std::runtime_error(strprintf( "Could not stat image file \"%s\": %s.",aDirsOrFileNames[i].c_str(),ErrorMsg.c_str()));
+      }
+
+      if (S_ISREG (st_buf.st_mode))
+      {
+        // normale Datei, mit in die Liste
+        iFileNames.push_back(aDirsOrFileNames[i]);
+      }
+      else if (S_ISDIR (st_buf.st_mode))
+      {
+        // Verzeichnis
+        vector<string>iFiles=FindFilesInDir(aDirsOrFileNames[i]);
+        for (unsigned int t=0;t<iFiles.size();t++)
+          iFileNames.push_back(iFiles[t]);
+      }
+    }
+    catch (exception & err)
+    {
+      fprintf(stderr, "Kann Datei oder Verzeichnis nicht mit in die Liste aufnehmen: %s : %s\r\n",aDirsOrFileNames[i].c_str(),err.what());
+    }
+  }
+  return iFileNames;
+}
+
+vector<string> FindFilesInDir(const string & aDir)
+{
+  vector<string> iFiles;
+  DIR *d;
+  struct dirent *dir;
+  d = opendir(aDir.c_str());
+  if (d)
+  {
+    while ((dir = readdir(d)) != NULL)
+    {
+      if (dir->d_type == DT_REG)
+        iFiles.push_back(string(aDir)+"/"+string(dir->d_name));
+    }
+    closedir(d);
+  }
+  return iFiles;
 }

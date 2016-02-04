@@ -13,6 +13,8 @@ void BlurTexture(SDL_Texture* pTexture, unsigned int r);
 
 void BlurSurface(SDL_Surface* pSurface, unsigned int r);
 
+void FlipSurface(SDL_Surface* pSurface, bool aFlipHorizontal);
+
 void BlurRGBA(int aWidth, int aHeight, int aPitch, unsigned char * pPixels, unsigned int aPixelFormat, int r);
 
 /// Funktion für den Gaussian-Blur-Effekt auf einem Graukanal
