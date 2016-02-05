@@ -159,6 +159,7 @@ int main(int argc, char** argv)
   }
 
   bool DoLoop=options[LOOP];
+  bool DoRand=options[RANDOM];
 
   for (option::Option* opt = options[UNKNOWN]; opt; opt = opt->next())
     std::cout << "Unknown option: " << opt->name << "\n";
@@ -168,10 +169,11 @@ int main(int argc, char** argv)
   for (int i = 0; i < parse.nonOptionsCount(); ++i)
     iDirsOrFiles.push_back(parse.nonOption(i));
 
-  vector<string> iFileNames=ExpandFileNames(iDirsOrFiles);
-  printf("Anzahl anzuzeigender Dateien: %d\r\n",iFileNames.size());
-  for (unsigned int i=0;i<iFileNames.size();i++)
-    printf("%s\r\n",iFileNames[i].c_str());
+  vector<string> iFilesToDisplay=ExpandFileNames(iDirsOrFiles);
+  vector<string> iFilesAlreadyDisplayed;
+  printf("Anzahl anzuzeigender Dateien: %d\r\n",iFilesToDisplay.size());
+  for (unsigned int i=0;i<iFilesToDisplay.size();i++)
+    printf("%s\r\n",iFilesToDisplay[i].c_str());
     //std::cout << "Non-option #" << i << ": " << parse.nonOption(i) << "\n";
 
   // Initialize SDL
@@ -248,13 +250,17 @@ int main(int argc, char** argv)
   bool quit=false;
   do
   {
+    srand (time(NULL));
     ErrCount=0;
-    for (unsigned int i = 0; i < iFileNames.size(); ++i)
+    while (iFilesToDisplay.size()>0)
     {
       try
       {
         gParams.CurrentTexture=new ImageTexture();
-        gParams.CurrentTexture->ImageFilename=iFileNames[i];
+        int i=DoRand ? rand() % iFilesToDisplay.size() : 0;
+        iFilesAlreadyDisplayed.push_back(iFilesToDisplay[i]);
+        gParams.CurrentTexture->ImageFilename=iFilesToDisplay[i];
+        iFilesToDisplay.erase(iFilesToDisplay.begin() + i);
 
         LoadTextures(gParams);
 
@@ -289,6 +295,12 @@ int main(int argc, char** argv)
       break;  // zu viele Fehler...
     if (quit)
       break;
+    if (iFilesToDisplay.size()==0)
+    {
+      printf("Neuer Durchlauf...\r\n");
+      iFilesToDisplay=iFilesAlreadyDisplayed;
+      iFilesAlreadyDisplayed.clear();
+    }
   }
   while (DoLoop && !quit);
 
@@ -602,30 +614,13 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
             SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe1Texture, NumSteps-i );
             SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe2Texture, NumSteps-i );
 
-            SDL_Rect osr=aParams.OldTexture->ScreenRect;
-            osr.x--;
-            osr.y--;
-            osr.h+=2;
-            osr.w+=2;
-
-            //SDL_RenderCopyEx(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1,0.0,NULL,SDL_FLIP_HORIZONTAL);
-            //SDL_RenderCopyEx(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2,0.0,NULL,SDL_FLIP_HORIZONTAL);
-            //SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &osr/*&aParams.OldTexture->ScreenRect*/);
             SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1);
             SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2);
             SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &aParams.OldTexture->ScreenRect);
           }
           // Copy the texture on the renderer
-          //SDL_RenderCopyEx(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1,0.0,NULL,SDL_FLIP_HORIZONTAL);
-          //SDL_RenderCopyEx(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2,0.0,NULL,SDL_FLIP_HORIZONTAL);
           SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1);
           SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2);
-          SDL_Rect sr=aParams.CurrentTexture->ScreenRect;
-          sr.x--;
-          sr.y--;
-          sr.h+=2;
-          sr.w+=2;
-          //SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &sr/*&aParams.CurrentTexture->ScreenRect*/);
           SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &aParams.CurrentTexture->ScreenRect);
           // Update the window surface (show the renderer)
           SDL_RenderPresent(aParams.Renderer);

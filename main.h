@@ -112,7 +112,7 @@ struct Arg: public option::Arg
   }
 };
 
-enum  optionIndex { UNKNOWN, HELP, TIME, LOOP, EFFECT };
+enum  optionIndex { UNKNOWN, HELP, TIME, LOOP, EFFECT, RANDOM };
 const option::Descriptor usage[] =
 {
   {
@@ -123,6 +123,7 @@ const option::Descriptor usage[] =
   {TIME,    0,"t", "time",Arg::Numeric, "  --time, -t  \tTime between two images." },
   {LOOP,    0,"l", "loop",Arg::None,   "  --loop, -l \tLoop forever." },
   {EFFECT,  0,"e", "effect",Arg::Numeric, "  --effect, -e  \tUse effect number x to blend images." },
+  {RANDOM,  0,"r", "loop",Arg::None,   "  --rand, -r \tRandom image sequence." },
   {
     UNKNOWN, 0,"",  "",Arg::None, "\nExamples:\n"
     "  ./SdlTest -t 10 -e 1 file1 file2\n"
