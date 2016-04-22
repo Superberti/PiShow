@@ -3,7 +3,7 @@
 
 # Hier kommen die unbearbeiteten Bilder an
 rootdir="/samba/public/"
-convdir="~/Pictures/conv/"
+convdir="/home/pi/Pictures/conv/"
 tempdir="/tmp/"
 
 import subprocess
@@ -58,20 +58,21 @@ while 1==1:
         try:
             OrigNewFileName=NewFileName
             RenameFile=False
-            if os.path.isfile(NewFileName):
+            if os.path.isfile(NewFileName)==True:
+                print("dublette erkannt")
                 NewFileName=os.path.join(tempdir,BaseFileName+"_conv.JPG")
                 RenameFile=True
                 
             grepOut=subprocess.check_output("convert "+ImageFileName+" -auto-orient -ordered-dither o8x8,64,64,64 -quality 97 "+ResizeVal+" "+NewFileName, shell=True)
             
-            if RenameFile:
-                if filecmp(NewFileName,OrigNewFileName):
+            if RenameFile==True:
+                if filecmp.cmp(NewFileName,OrigNewFileName)==True:
                     print ("Das Bild <"+OrigNewFileName+"> exisitert bereits. Keine Aktion notwendig!")
                 else:
                     print ("Der Bildname <"+OrigNewFileName+"> exisitert zwar bereits, aber der Bildinhalt ist unterschiedlich. Benenne Zieldatei um!")
                     ImageCounter=1
                     NewFileName=os.path.join(convdir,BaseFileName+"_"+str(ImageCounter)+"_conv.JPG")
-                    while os.path.isfile(NewFileName):
+                    while os.path.isfile(NewFileName)==True:
                         ImageCounter+=1
                         NewFileName=os.path.join(convdir,BaseFileName+"_"+str(ImageCounter)+"_conv.JPG")
 
