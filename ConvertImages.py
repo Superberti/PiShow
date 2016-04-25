@@ -3,7 +3,7 @@
 
 # Hier kommen die unbearbeiteten Bilder an
 rootdir="/samba/public/"
-convdir="/home/pi/Pictures/conv/"
+convdir="/home/pi/Pictures/Anzeige/conv/"
 tempdir="/tmp/"
 
 import subprocess
@@ -30,7 +30,7 @@ while 1==1:
     for ImageFileName in ImageList:
         #print("Bearbeite Bild: "+ImageFileName)
 
-        ExifArgsString=subprocess.check_output('exiftool -s -s -s -n -ImageWidth -ImageHeight -Orientation -ImageDescription '+ImageFileName, shell=True, stderr=subprocess.STDOUT)
+        ExifArgsString=subprocess.check_output('exiftool -s -s -s -n -ImageWidth -ImageHeight -Orientation -ImageDescription "'+ImageFileName+'"', shell=True, stderr=subprocess.STDOUT)
         #print (ExifArgs)
 
         ExifArgs=ExifArgsString.decode("utf-8").splitlines()
@@ -63,7 +63,7 @@ while 1==1:
                 NewFileName=os.path.join(tempdir,BaseFileName+"_conv.JPG")
                 RenameFile=True
                 
-            grepOut=subprocess.check_output("convert "+ImageFileName+" -auto-orient -ordered-dither o8x8,64,64,64 -quality 97 "+ResizeVal+" "+NewFileName, shell=True)
+            grepOut=subprocess.check_output('convert "'+ImageFileName+'" -auto-orient -ordered-dither o8x8,64,64,64 -quality 97 '+ResizeVal+' "'+NewFileName+'"', shell=True)
             
             if RenameFile==True:
                 if filecmp.cmp(NewFileName,OrigNewFileName)==True:
