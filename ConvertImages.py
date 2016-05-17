@@ -13,6 +13,13 @@ import time
 import filecmp
 import shutil
 
+def RepresentsInt(s):
+        try: 
+            int(s)
+            return True
+        except ValueError:
+            return False
+
 print ("Raspi-Bilderrahmen-Konverter gestartet...")
 
 while 1==1:
@@ -23,14 +30,14 @@ while 1==1:
     if len(ImageList)>0:
         print("Neue Bilder erkannt. Starte Konversion...")
     else:
-        print("Nächste Überprüfung in 5 Minuten.")
-        time.sleep(30)
+        print("Nächste Überprüfung in 60 Sekunden.")
+        time.sleep(60)
 
     # Bilder konvertieren
     for ImageFileName in ImageList:
         #print("Bearbeite Bild: "+ImageFileName)
 
-        ExifArgsString=subprocess.check_output('exiftool -s -s -s -n -ImageWidth -ImageHeight -Orientation -ImageDescription "'+ImageFileName+'"', shell=True, stderr=subprocess.STDOUT)
+        ExifArgsString=subprocess.check_output('exiftool -s -s -s -n -f -ImageWidth -ImageHeight -Orientation -ImageDescription "'+ImageFileName+'"', shell=True, stderr=subprocess.STDOUT)
         #print (ExifArgs)
 
         ExifArgs=ExifArgsString.decode("utf-8").splitlines()
@@ -38,7 +45,10 @@ while 1==1:
 
         Width=int(ExifArgs[0])
         Height=int(ExifArgs[1])
-        Orientation=int(ExifArgs[2])
+        HasOrientation=RepresentsInt(ExifArgs[2])
+        Orientation=0
+        if HasOrientation==True:
+            Orientation=int(ExifArgs[2])
         Description=ExifArgs[3]
 
         BaseFileName=os.path.splitext(os.path.basename(ImageFileName))[0]
@@ -48,11 +58,17 @@ while 1==1:
         NewFileName=os.path.join(convdir,BaseFileName+"_conv.JPG")
         print ("Konvertiere<"+ImageFileName+"> nach <"+NewFileName+">...", end="")
 
-        if Orientation==1 and Width>=Height:
+        if Orientation==1 or Orientation==3:
             print("querformat...",end="")
             ResizeVal="-resize 1920x"
-        else:
+        elif Orientation==6 or Orientation==8:
             print("hochformat...",end="")
+            ResizeVal="-resize x1200"
+        elif Width>=Height:
+            print("querformat...(ohne EXIF)",end="")
+            ResizeVal="-resize 1920x"
+        else:
+            print("hochformat...(ohne EXIF)",end="")
             ResizeVal="-resize x1200"
             
         try:
@@ -81,10 +97,11 @@ while 1==1:
                     os.remove(TempFileName)
                     
             os.remove(ImageFileName)
-        except subprocess.CalledProcessError as repexc:
+        except subprocess.CalledProcessError as grepexc:
             print ("convert Fehlercode", grepexc.returncode, grepexc.output )
 
         print("fertig.")
+
 
     
     

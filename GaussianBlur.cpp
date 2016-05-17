@@ -66,6 +66,9 @@ void BlurSurface(SDL_Surface* pSurface, unsigned int r)
 
 void BlurRGBA(int aWidth, int aHeight, int aPitch, unsigned char * pPixels, Uint32 aPixelFormat, int r)
 {
+  // Kein Blur, falls der Blur-Radius größer als dioe Höhe oder Breite des Bildes ist.
+  if (aWidth<r || aHeight<r)
+    return;
   const int NumBytesCurrent=aPitch*aHeight;
   // Aufteilung in einzelne Farbkanäle
   const int ChannelSize=NumBytesCurrent/4;

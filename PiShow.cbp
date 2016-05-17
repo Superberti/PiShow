@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="~/Pictures/conv/Winterschild.jpg" />
+				<Option parameters="~/Pictures/conv/DSC01423_conv.JPG" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>

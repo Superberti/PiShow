@@ -169,11 +169,10 @@ int main(int argc, char** argv)
   for (int i = 0; i < parse.nonOptionsCount(); ++i)
     iDirsOrFiles.push_back(parse.nonOption(i));
 
-  vector<string> iFilesToDisplay=ExpandFileNames(iDirsOrFiles);
-  vector<string> iFilesAlreadyDisplayed;
-  printf("Anzahl anzuzeigender Dateien: %d\r\n",iFilesToDisplay.size());
-  for (unsigned int i=0;i<iFilesToDisplay.size();i++)
-    printf("%s\r\n",iFilesToDisplay[i].c_str());
+  //vector<string> iFilesAlreadyDisplayed;
+  //printf("Anzahl anzuzeigender Dateien: %d\r\n",iFilesToDisplay.size());
+  //for (unsigned int i=0;i<iFilesToDisplay.size();i++)
+    //printf("%s\r\n",iFilesToDisplay[i].c_str());
     //std::cout << "Non-option #" << i << ": " << parse.nonOption(i) << "\n";
 
   // Initialize SDL
@@ -248,8 +247,13 @@ int main(int argc, char** argv)
   const int MaxErrCount=5;
 
   bool quit=false;
+
+  vector<string> iAllFilesToDisplay;
+  vector<string> iFilesToDisplay;
   do
   {
+    iAllFilesToDisplay=ExpandFileNames(iDirsOrFiles);
+    iFilesToDisplay=iAllFilesToDisplay;
     srand (time(NULL));
     ErrCount=0;
     while (iFilesToDisplay.size()>0)
@@ -258,7 +262,7 @@ int main(int argc, char** argv)
       {
         gParams.CurrentTexture=new ImageTexture();
         int i=DoRand ? rand() % iFilesToDisplay.size() : 0;
-        iFilesAlreadyDisplayed.push_back(iFilesToDisplay[i]);
+        //iFilesAlreadyDisplayed.push_back(iFilesToDisplay[i]);
         gParams.CurrentTexture->ImageFilename=iFilesToDisplay[i];
         iFilesToDisplay.erase(iFilesToDisplay.begin() + i);
 
@@ -298,11 +302,11 @@ int main(int argc, char** argv)
     if (iFilesToDisplay.size()==0)
     {
       printf("Neuer Durchlauf...\r\n");
-      iFilesToDisplay=iFilesAlreadyDisplayed;
-      iFilesAlreadyDisplayed.clear();
+      //iFilesToDisplay=iFilesAlreadyDisplayed;
+      //iFilesAlreadyDisplayed.clear();
     }
   }
-  while (DoLoop && !quit);
+  while (DoLoop && !quit && iAllFilesToDisplay.size()>0);
 
   gParams.Cleanup();
   SDL_Quit();
