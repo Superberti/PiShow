@@ -30,7 +30,7 @@ while 1==1:
     if len(ImageList)>0:
         print("Neue Bilder erkannt. Starte Konversion...")
     else:
-        print("Nächste Überprüfung in 60 Sekunden.")
+        #print("Nächste Überprüfung in 60 Sekunden.")
         time.sleep(60)
 
     # Bilder konvertieren
@@ -101,6 +101,7 @@ while 1==1:
             print ("convert Fehlercode", grepexc.returncode, grepexc.output )
 
         print("fertig.")
+        sys.stdout.flush()
 
 
     
