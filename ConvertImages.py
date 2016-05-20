@@ -22,6 +22,8 @@ def RepresentsInt(s):
             return False
 
 print ("Raspi-Bilderrahmen-Konverter gestartet...")
+DisplayWidth=1920
+DisplayHeight=1200
 
 while 1==1:
     ImageList = glob.glob(rootdir+"*.JPG")
@@ -46,10 +48,10 @@ while 1==1:
 
         Width=int(ExifArgs[0])
         Height=int(ExifArgs[1])
-        HasOrientation=RepresentsInt(ExifArgs[2])
-        Orientation=0
-        if HasOrientation==True:
-            Orientation=int(ExifArgs[2])
+        #HasOrientation=RepresentsInt(ExifArgs[2])
+        #Orientation=0
+        #if HasOrientation==True:
+            #Orientation=int(ExifArgs[2])
         Description=ExifArgs[3]
 
         BaseFileName=os.path.splitext(os.path.basename(ImageFileName))[0]
@@ -59,18 +61,17 @@ while 1==1:
         NewFileName=os.path.join(convdir,BaseFileName+"_conv.JPG")
         print ("Konvertiere<"+ImageFileName+"> nach <"+NewFileName+">...", end="")
 
-        if Orientation==1 or Orientation==3:
-            print("querformat...",end="")
-            ResizeVal="-resize 1920x"
-        elif Orientation==6 or Orientation==8:
+        if Height>Width:
             print("hochformat...",end="")
-            ResizeVal="-resize x1200"
-        elif Width>=Height:
-            print("querformat...(ohne EXIF)",end="")
-            ResizeVal="-resize 1920x"
+            ResizeVal="-resize x"+str(DisplayHeight)
         else:
-            print("hochformat...(ohne EXIF)",end="")
-            ResizeVal="-resize x1200"
+            if DisplayWidth/Width*Height>DisplayHeight:
+                print("querformat in y begrenzt...",end="")
+                ResizeVal="-resize x"+str(DisplayHeight)
+            else:
+                print("querformat in x begrenzt...",end="")
+                ResizeVal="-resize "+str(DisplayWidth)+"x"
+        
             
         try:
             OrigNewFileName=NewFileName
