@@ -409,55 +409,63 @@ void LoadTextures(PiShowParams& aParams)
 
     // Bildränder berechnen
     aParams.CurrentTexture->CalcBorders();
-    // Texturen für die Ränder anlegen, die dann mit blur unscharf dargestellt werden
-    Stripe1 = SDL_CreateRGBSurface(0, aParams.CurrentTexture->ScreenRectStripe1.w, aParams.CurrentTexture->ScreenRectStripe1.h, 32,  bmask, gmask, rmask, amask);
-    check_error_sdl(Stripe1 == NULL, "SDL_CreateRGBSurface stripe1 failed");
-    Stripe2 = SDL_CreateRGBSurface(0, aParams.CurrentTexture->ScreenRectStripe2.w, aParams.CurrentTexture->ScreenRectStripe2.h, 32,  bmask, gmask, rmask, amask);
-    check_error_sdl(Stripe2 == NULL, "SDL_CreateRGBSurface stripe2 failed");
+    if (aParams.CurrentTexture->ScreenRectStripe1.w>0 && aParams.CurrentTexture->ScreenRectStripe1.h>0)
+    {
+      // Texturen für die Ränder anlegen, die dann mit blur unscharf dargestellt werden
+      Stripe1 = SDL_CreateRGBSurface(0, aParams.CurrentTexture->ScreenRectStripe1.w, aParams.CurrentTexture->ScreenRectStripe1.h, 32,  bmask, gmask, rmask, amask);
+      check_error_sdl(Stripe1 == NULL, "SDL_CreateRGBSurface stripe1 failed");
 
-    // Textur oben bzw. links
-    SDL_Rect SrcRectStripe1;
-    if (aParams.CurrentTexture->PortraitMode)
-    {
-      SrcRectStripe1.w=min(formattedSurface->w,int(formattedSurface->h*double(aParams.CurrentTexture->ScreenRectStripe1.w)/double(aParams.CurrentTexture->ScreenRectStripe1.h)));
-      SrcRectStripe1.h=formattedSurface->h;
-      SrcRectStripe1.x=0;
-      SrcRectStripe1.y=0;
+      // Textur oben bzw. links
+      SDL_Rect SrcRectStripe1;
+      if (aParams.CurrentTexture->PortraitMode)
+      {
+        SrcRectStripe1.w=min(formattedSurface->w,int(formattedSurface->h*double(aParams.CurrentTexture->ScreenRectStripe1.w)/double(aParams.CurrentTexture->ScreenRectStripe1.h)));
+        SrcRectStripe1.h=formattedSurface->h;
+        SrcRectStripe1.x=0;
+        SrcRectStripe1.y=0;
+      }
+      else
+      {
+        SrcRectStripe1.w=formattedSurface->w;
+        SrcRectStripe1.h=min(formattedSurface->h,int(formattedSurface->w*double(aParams.CurrentTexture->ScreenRectStripe1.h)/double(aParams.CurrentTexture->ScreenRectStripe1.w)));
+        SrcRectStripe1.x=0;
+        SrcRectStripe1.y=0;
+      }
+      SDL_BlitScaled(formattedSurface, &SrcRectStripe1, Stripe1, NULL);
+      BlurSurface(Stripe1, 10);
+      FlipSurface(Stripe1,aParams.CurrentTexture->PortraitMode);
+      aParams.CurrentTexture->Stripe1Texture = SDL_CreateTextureFromSurface(aParams.Renderer, Stripe1);
+      check_error_sdl(aParams.CurrentTexture->Stripe1Texture == NULL, "SDL_CreateTextureFromSurface aParams.CurrentStripe1Texture failed.");
     }
-    else
-    {
-      SrcRectStripe1.w=formattedSurface->w;
-      SrcRectStripe1.h=min(formattedSurface->h,int(formattedSurface->w*double(aParams.CurrentTexture->ScreenRectStripe1.h)/double(aParams.CurrentTexture->ScreenRectStripe1.w)));
-      SrcRectStripe1.x=0;
-      SrcRectStripe1.y=0;
-    }
-    SDL_BlitScaled(formattedSurface, &SrcRectStripe1, Stripe1, NULL);
-    BlurSurface(Stripe1, 10);
-    FlipSurface(Stripe1,aParams.CurrentTexture->PortraitMode);
-    aParams.CurrentTexture->Stripe1Texture = SDL_CreateTextureFromSurface(aParams.Renderer, Stripe1);
-    check_error_sdl(aParams.CurrentTexture->Stripe1Texture == NULL, "SDL_CreateTextureFromSurface aParams.CurrentStripe1Texture failed.");
 
-    // Textur unten bzw. rechts
-    SDL_Rect SrcRectStripe2;
-    if (aParams.CurrentTexture->PortraitMode)
+
+    if (aParams.CurrentTexture->ScreenRectStripe2.w>0 && aParams.CurrentTexture->ScreenRectStripe2.h>0)
     {
-      SrcRectStripe2.w=min(formattedSurface->w,int(formattedSurface->h*double(aParams.CurrentTexture->ScreenRectStripe2.w)/double(aParams.CurrentTexture->ScreenRectStripe2.h)));
-      SrcRectStripe2.h=formattedSurface->h;
-      SrcRectStripe2.x=formattedSurface->w-SrcRectStripe2.w;
-      SrcRectStripe2.y=0;
+      Stripe2 = SDL_CreateRGBSurface(0, aParams.CurrentTexture->ScreenRectStripe2.w, aParams.CurrentTexture->ScreenRectStripe2.h, 32,  bmask, gmask, rmask, amask);
+      check_error_sdl(Stripe2 == NULL, "SDL_CreateRGBSurface stripe2 failed");
+
+      // Textur unten bzw. rechts
+      SDL_Rect SrcRectStripe2;
+      if (aParams.CurrentTexture->PortraitMode)
+      {
+        SrcRectStripe2.w=min(formattedSurface->w,int(formattedSurface->h*double(aParams.CurrentTexture->ScreenRectStripe2.w)/double(aParams.CurrentTexture->ScreenRectStripe2.h)));
+        SrcRectStripe2.h=formattedSurface->h;
+        SrcRectStripe2.x=formattedSurface->w-SrcRectStripe2.w;
+        SrcRectStripe2.y=0;
+      }
+      else
+      {
+        SrcRectStripe2.w=formattedSurface->w;
+        SrcRectStripe2.h=min(formattedSurface->h,int(formattedSurface->w*double(aParams.CurrentTexture->ScreenRectStripe2.h)/double(aParams.CurrentTexture->ScreenRectStripe2.w)));
+        SrcRectStripe2.x=0;
+        SrcRectStripe2.y=formattedSurface->h-SrcRectStripe2.h;
+      }
+      SDL_BlitScaled(formattedSurface, &SrcRectStripe2, Stripe2, NULL);
+      BlurSurface(Stripe2, 10);
+      FlipSurface(Stripe2,aParams.CurrentTexture->PortraitMode);
+      aParams.CurrentTexture->Stripe2Texture = SDL_CreateTextureFromSurface(aParams.Renderer, Stripe2);
+      check_error_sdl(aParams.CurrentTexture->Stripe2Texture == NULL, "SDL_CreateTextureFromSurface aParams.CurrentStripe2Texture failed.");
     }
-    else
-    {
-      SrcRectStripe2.w=formattedSurface->w;
-      SrcRectStripe2.h=min(formattedSurface->h,int(formattedSurface->w*double(aParams.CurrentTexture->ScreenRectStripe2.h)/double(aParams.CurrentTexture->ScreenRectStripe2.w)));
-      SrcRectStripe2.x=0;
-      SrcRectStripe2.y=formattedSurface->h-SrcRectStripe2.h;
-    }
-    SDL_BlitScaled(formattedSurface, &SrcRectStripe2, Stripe2, NULL);
-    BlurSurface(Stripe2, 10);
-    FlipSurface(Stripe2,aParams.CurrentTexture->PortraitMode);
-    aParams.CurrentTexture->Stripe2Texture = SDL_CreateTextureFromSurface(aParams.Renderer, Stripe2);
-    check_error_sdl(aParams.CurrentTexture->Stripe2Texture == NULL, "SDL_CreateTextureFromSurface aParams.CurrentStripe2Texture failed.");
 
   }
   catch (exception & Err)
@@ -597,34 +605,46 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
     case AlphaBlending:
       {
         check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
-        check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Stripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode CurrentStripe1Texture");
-        check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Stripe2Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode CurrentStripe2Texture");
+        if (aParams.CurrentTexture->Stripe1Texture!=NULL)
+          check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Stripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode CurrentStripe1Texture");
+        if(aParams.CurrentTexture->Stripe2Texture!=NULL)
+          check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Stripe2Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode CurrentStripe2Texture");
         if (aParams.OldTexture!=NULL && aParams.OldTexture->Texture!=NULL)
         {
           check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode old texture");
-          check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Stripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode OldStripe1Texture");
-          check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Stripe2Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode OldStripe2Texture");
+          if(aParams.OldTexture->Stripe1Texture!=NULL)
+            check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Stripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode OldStripe1Texture");
+          if(aParams.OldTexture->Stripe2Texture!=NULL)
+            check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Stripe2Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode OldStripe2Texture");
         }
         const int NumSteps=255;
         for (int i=0; i<=NumSteps; i+=2)
         {
           SDL_SetTextureAlphaMod( aParams.CurrentTexture->Texture, i );
-          SDL_SetTextureAlphaMod( aParams.CurrentTexture->Stripe1Texture, i );
-          SDL_SetTextureAlphaMod( aParams.CurrentTexture->Stripe2Texture, i );
+          if (aParams.CurrentTexture->Stripe1Texture!=NULL)
+            SDL_SetTextureAlphaMod( aParams.CurrentTexture->Stripe1Texture, i );
+          if (aParams.CurrentTexture->Stripe2Texture!=NULL)
+            SDL_SetTextureAlphaMod( aParams.CurrentTexture->Stripe2Texture, i );
 
           if (aParams.OldTexture!=NULL && aParams.OldTexture->Texture!=NULL)
           {
             SDL_SetTextureAlphaMod( aParams.OldTexture->Texture, NumSteps-i );
-            SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe1Texture, NumSteps-i );
-            SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe2Texture, NumSteps-i );
+            if(aParams.OldTexture->Stripe1Texture!=NULL)
+              SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe1Texture, NumSteps-i );
+            if(aParams.OldTexture->Stripe2Texture!=NULL)
+              SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe2Texture, NumSteps-i );
 
-            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1);
-            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2);
+            if(aParams.OldTexture->Stripe1Texture!=NULL)
+              SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1);
+            if(aParams.OldTexture->Stripe2Texture!=NULL)
+              SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2);
             SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &aParams.OldTexture->ScreenRect);
           }
           // Copy the texture on the renderer
-          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1);
-          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2);
+          if (aParams.CurrentTexture->Stripe1Texture!=NULL)
+            SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1);
+          if (aParams.CurrentTexture->Stripe2Texture!=NULL)
+            SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2);
           SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &aParams.CurrentTexture->ScreenRect);
           // Update the window surface (show the renderer)
           SDL_RenderPresent(aParams.Renderer);
