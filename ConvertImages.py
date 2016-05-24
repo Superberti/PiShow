@@ -15,11 +15,11 @@ import shutil
 import sys
 
 def RepresentsInt(s):
-	try: 
-		int(s)
-        return True
-    except ValueError:
-		return False
+        try: 
+                int(s)
+                return True
+        except ValueError:
+                return False
 
 print ("Raspi-Bilderrahmen-Konverter gestartet...")
 DisplayWidth=1920
