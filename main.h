@@ -116,7 +116,7 @@ enum  optionIndex { UNKNOWN, HELP, TIME, LOOP, EFFECT, RANDOM };
 const option::Descriptor usage[] =
 {
   {
-    UNKNOWN, 0,"", "",Arg::None, "USAGE: example [options]\n\n"
+    UNKNOWN, 0,"", "",Arg::None, "USAGE: PiShow [options] file1 file2 dir1 dir2\n\n"
     "Options:"
   },
   {HELP,    0,"", "help",Arg::None,    "  --help  \tPrint usage and exit." },
@@ -126,7 +126,7 @@ const option::Descriptor usage[] =
   {RANDOM,  0,"r", "loop",Arg::None,   "  --rand, -r \tRandom image sequence." },
   {
     UNKNOWN, 0,"",  "",Arg::None, "\nExamples:\n"
-    "  ./SdlTest -t 10 -e 1 file1 file2\n"
+    "  ./PiShow -t 10 -e 1 file1 file2\n"
   },
   {0,0,0,0,0,0}
 };
