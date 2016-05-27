@@ -2,6 +2,7 @@
 #define MAIN_H_INCLUDED
 
 #include <string>
+#include <functional>
 #include "optionparser.h"
 #include "tools.h"
 
@@ -18,6 +19,7 @@ public:
   SDL_Renderer* Renderer;
   ImageTexture *CurrentTexture;
   ImageTexture *OldTexture;
+  SDL_Texture *TextTexture;
   PiShowParams();
   void Cleanup();
 };
@@ -129,6 +131,20 @@ const option::Descriptor usage[] =
     "  ./PiShow -t 10 -e 1 file1 file2\n"
   },
   {0,0,0,0,0,0}
+};
+
+void CreateTextTexture(PiShowParams& aParams);
+
+// Hilfsklasse für das Abräumen von Ressourcen
+class finally
+{
+  std::function<void(void)> functor;
+public:
+  finally(const std::function<void(void)> &functor) : functor(functor) {}
+  ~finally()
+  {
+    functor();
+  }
 };
 
 #endif // MAIN_H_INCLUDED

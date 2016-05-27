@@ -1,6 +1,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengles2.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL2_gfxPrimitives.h>
+#include <SDL2/SDL_ttf.h>
 #include <iostream>
 #include <turbojpeg.h>
 #include <iostream>
@@ -29,6 +31,7 @@ PiShowParams::PiShowParams()
   , Renderer(NULL)
   , CurrentTexture(NULL)
   , OldTexture(NULL)
+  , TextTexture(NULL)
 {
 }
 
@@ -38,6 +41,11 @@ void PiShowParams::Cleanup()
   CurrentTexture=NULL;
   delete OldTexture;
   OldTexture=NULL;
+  if (TextTexture!=NULL)
+  {
+    SDL_DestroyTexture(TextTexture);
+    TextTexture=NULL;
+  }
   SDL_DestroyRenderer(Renderer);
   Renderer=NULL;
   SDL_DestroyWindow(Window);
@@ -116,6 +124,8 @@ void ImageTexture::CalcBorders()
 
 }
 
+SDL_Texture * TestTexture=NULL;
+
 int main(int argc, char** argv)
 {
   PiShowParams gParams;
@@ -123,6 +133,7 @@ int main(int argc, char** argv)
   int SleepTime_s=DefaultSleepTime_s;
   int DefaultBlendEffect=AlphaBlending;
   int MyBlendEffect=DefaultBlendEffect;
+
   // Kommandozeile auswerten
   argc-=(argc>0);
   argv+=(argc>0); // skip program name argv[0] if present
@@ -247,7 +258,7 @@ int main(int argc, char** argv)
   const int MaxErrCount=5;
 
   bool quit=false;
-
+  CreateTextTexture(gParams);
   vector<string> iAllFilesToDisplay;
   vector<string> iFilesToDisplay;
   do
@@ -605,6 +616,7 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
     case AlphaBlending:
       {
         check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+        check_error_sdl(SDL_SetTextureBlendMode(aParams.TextTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode text texture");
         if (aParams.CurrentTexture->Stripe1Texture!=NULL)
           check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Stripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode CurrentStripe1Texture");
         if(aParams.CurrentTexture->Stripe2Texture!=NULL)
@@ -646,6 +658,16 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
           if (aParams.CurrentTexture->Stripe2Texture!=NULL)
             SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2);
           SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &aParams.CurrentTexture->ScreenRect);
+
+          roundedBoxRGBA(aParams.Renderer,aParams.ScreenWidth/2-200,aParams.ScreenHeight/2-200,aParams.ScreenWidth/2+200,aParams.ScreenHeight/2+200,20,255,80,30,127);
+          SDL_Rect TextRect;
+          SDL_QueryTexture(aParams.TextTexture, NULL, NULL, &TextRect.w, &TextRect.h);
+          TextRect.w+=i;
+          TextRect.h+=i;
+          TextRect.x=aParams.ScreenWidth/2-TextRect.w/2+i;
+          TextRect.y=aParams.ScreenHeight/2-TextRect.h/2+i;
+          SDL_SetTextureAlphaMod( aParams.TextTexture, i );
+          SDL_RenderCopy(aParams.Renderer, aParams.TextTexture, NULL, &TextRect);
           // Update the window surface (show the renderer)
           SDL_RenderPresent(aParams.Renderer);
 
@@ -728,4 +750,51 @@ vector<string> FindFilesInDir(const string & aDir)
     closedir(d);
   }
   return iFiles;
+}
+
+void CreateTextTexture(PiShowParams& aParams)
+{
+  try
+  {
+    TTF_Font *font=NULL;
+    SDL_Surface *surface=NULL;
+
+    if (aParams.TextTexture!=NULL)
+    {
+      SDL_DestroyTexture(aParams.TextTexture);
+      aParams.TextTexture=NULL;
+    }
+
+    // TTF initialisieren
+    if(TTF_Init()==-1)
+      throw runtime_error( "TTF_Init failed! TTF Error: " + string(TTF_GetError() ));
+
+
+    font=TTF_OpenFont("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 64);
+    if(!font)
+      throw runtime_error( "TTF_OpenFont failed! TTF Error: " + string(TTF_GetError() ));
+
+    SDL_Color color={0,0,0};
+    if(!(surface=TTF_RenderText_Blended(font,"Oliver Rutsch!",color)))
+      throw runtime_error( "TTF_RenderText_Blended failed! TTF Error: " + string(TTF_GetError() ));
+
+    aParams.TextTexture = SDL_CreateTextureFromSurface(aParams.Renderer, surface);
+    check_error_sdl(aParams.TextTexture == NULL, "SDL_CreateTextureFromSurface texture failed.");
+
+    finally cleanup([&]
+    {
+      if (font!=NULL)
+        TTF_CloseFont(font);
+      if (surface!=NULL)
+        SDL_FreeSurface(surface);
+
+      TTF_Quit();
+    });
+
+  }
+  catch (...)
+  {
+    throw;
+  }
+  return;
 }
