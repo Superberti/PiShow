@@ -258,7 +258,7 @@ int main(int argc, char** argv)
   const int MaxErrCount=5;
 
   bool quit=false;
-  CreateTextTexture(gParams);
+  //CreateTextTexture(gParams);
   vector<string> iAllFilesToDisplay;
   vector<string> iFilesToDisplay;
   do
@@ -616,6 +616,7 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
     case AlphaBlending:
       {
         check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+        if (aParams.TextTexture!=NULL)
         check_error_sdl(SDL_SetTextureBlendMode(aParams.TextTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode text texture");
         if (aParams.CurrentTexture->Stripe1Texture!=NULL)
           check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Stripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode CurrentStripe1Texture");
@@ -661,13 +662,16 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
 
           roundedBoxRGBA(aParams.Renderer,aParams.ScreenWidth/2-200,aParams.ScreenHeight/2-200,aParams.ScreenWidth/2+200,aParams.ScreenHeight/2+200,20,255,80,30,127);
           SDL_Rect TextRect;
-          SDL_QueryTexture(aParams.TextTexture, NULL, NULL, &TextRect.w, &TextRect.h);
-          TextRect.w+=i;
-          TextRect.h+=i;
-          TextRect.x=aParams.ScreenWidth/2-TextRect.w/2+i;
-          TextRect.y=aParams.ScreenHeight/2-TextRect.h/2+i;
-          SDL_SetTextureAlphaMod( aParams.TextTexture, i );
-          SDL_RenderCopy(aParams.Renderer, aParams.TextTexture, NULL, &TextRect);
+          if (aParams.TextTexture!=NULL)
+          {
+            SDL_QueryTexture(aParams.TextTexture, NULL, NULL, &TextRect.w, &TextRect.h);
+            TextRect.w+=i;
+            TextRect.h+=i;
+            TextRect.x=aParams.ScreenWidth/2-TextRect.w/2+i;
+            TextRect.y=aParams.ScreenHeight/2-TextRect.h/2+i;
+            SDL_SetTextureAlphaMod( aParams.TextTexture, i );
+            SDL_RenderCopy(aParams.Renderer, aParams.TextTexture, NULL, &TextRect);
+          }
           // Update the window surface (show the renderer)
           SDL_RenderPresent(aParams.Renderer);
 

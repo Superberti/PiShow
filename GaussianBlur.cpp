@@ -72,13 +72,13 @@ void BlurRGBA(int aWidth, int aHeight, int aPitch, unsigned char * pPixels, Uint
   const int NumBytesCurrent=aPitch*aHeight;
   // Aufteilung in einzelne Farbkanäle
   const int ChannelSize=NumBytesCurrent/4;
-  unsigned char * rc=new unsigned char[ChannelSize];
-  unsigned char * gc=new unsigned char[ChannelSize];
-  unsigned char * bc=new unsigned char[ChannelSize];
+  unsigned char * rc=new unsigned char[ChannelSize+r];
+  unsigned char * gc=new unsigned char[ChannelSize+r];
+  unsigned char * bc=new unsigned char[ChannelSize+r];
 
-  unsigned char * rc_d=new unsigned char[ChannelSize];
-  unsigned char * gc_d=new unsigned char[ChannelSize];
-  unsigned char * bc_d=new unsigned char[ChannelSize];
+  unsigned char * rc_d=new unsigned char[ChannelSize+r];
+  unsigned char * gc_d=new unsigned char[ChannelSize+r];
+  unsigned char * bc_d=new unsigned char[ChannelSize+r];
   int cc=0;
   for (int i=0; i<NumBytesCurrent; i+=4)
   {
