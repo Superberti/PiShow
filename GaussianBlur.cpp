@@ -64,7 +64,7 @@ void BlurSurface(SDL_Surface* pSurface, unsigned int r)
   BlurRGBA(pSurface->w, pSurface->h, pSurface->pitch, (unsigned char*)pSurface->pixels, pSurface->format->format, r);
 }
 
-void BlurRGBA(int aWidth, int aHeight, int aPitch, unsigned char * pPixels, Uint32 aPixelFormat, int r)
+void BlurRGBA(int aWidth, int aHeight, int aPitch, unsigned char * pPixels, Uint32 aPixelFormat, int r, bool sw)
 {
   // Kein Blur, falls der Blur-Radius größer als dioe Höhe oder Breite des Bildes ist.
   if (aWidth<r || aHeight<r)
@@ -97,10 +97,22 @@ void BlurRGBA(int aWidth, int aHeight, int aPitch, unsigned char * pPixels, Uint
   cc=0;
   for (int i=0; i<NumBytesCurrent; i+=4)
   {
-    pPixels[i]=bc_d[cc];
-    pPixels[i+1]=gc_d[cc];
-    pPixels[i+2]=rc_d[cc];
-    cc++;
+    if (sw)
+    {
+      double in=min(255.0,0.3*rc_d[cc]+0.59*gc_d[cc]+0.11*bc_d[cc])*0.8;
+      unsigned char i_i=(unsigned char)(in);
+      pPixels[i]=i_i;
+      pPixels[i+1]=i_i;
+      pPixels[i+2]=i_i;
+      cc++;
+    }
+    else
+    {
+      pPixels[i]=bc_d[cc];
+      pPixels[i+1]=gc_d[cc];
+      pPixels[i+2]=rc_d[cc];
+      cc++;
+    }
   }
   delete[] rc;
   delete[] gc;

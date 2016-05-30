@@ -660,7 +660,7 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
             SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2);
           SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &aParams.CurrentTexture->ScreenRect);
 
-          roundedBoxRGBA(aParams.Renderer,aParams.ScreenWidth/2-200,aParams.ScreenHeight/2-200,aParams.ScreenWidth/2+200,aParams.ScreenHeight/2+200,20,255,80,30,127);
+          //roundedBoxRGBA(aParams.Renderer,aParams.ScreenWidth/2-200,aParams.ScreenHeight/2-200,aParams.ScreenWidth/2+200,aParams.ScreenHeight/2+200,20,255,80,30,127);
           SDL_Rect TextRect;
           if (aParams.TextTexture!=NULL)
           {
