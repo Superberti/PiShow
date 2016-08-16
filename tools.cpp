@@ -13,6 +13,44 @@
 // -----------------------------------------------------------
 // -----------------------------------------------------------
 
+// Eigene Exception-Klasse
+TPiShowErr::TPiShowErr(const std::string & what)
+	: mErrorCode(0)
+{
+	what_=what;
+}
+
+TPiShowErr::TPiShowErr(const std::string & what, const int aErrorCode)
+	: mErrorCode(aErrorCode)
+{
+	what_=what;
+}
+
+TPiShowErr::TPiShowErr()
+	: mErrorCode(0)
+{}
+
+TPiShowErr::TPiShowErr(const TPiShowErr& rhs)
+{
+	*this = rhs;
+}
+
+//----------------------------------------------------------------------------
+
+TOSErr::TOSErr(const std::string & what, const int aOSErrorCode)
+{
+	mErrorCode=aOSErrorCode;
+	what_=what+" "+GetOsErrString(aOSErrorCode);
+}
+
+TOSErr::TOSErr(const int aOSErrorCode)
+{
+	mErrorCode=aOSErrorCode;
+	what_=GetOsErrString(aOSErrorCode);
+}
+
+//----------------------------------------------------------------------------
+
 std::string GetOsErrString(const int aErrorNumber)
 {
 	const size_t ErrBufSize=256;
@@ -105,6 +143,38 @@ int strvprintf(std::string & aStr,const char* format, va_list paramList)
 }
 
 //----------------------------------------------------------------------------
+
+timespec ts_diff(const timespec & start, const timespec & end)
+{
+	timespec temp;
+	if ((end.tv_nsec-start.tv_nsec)<0)
+	{
+		temp.tv_sec = end.tv_sec-start.tv_sec-1;
+		temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+	}
+	else
+	{
+		temp.tv_sec = end.tv_sec-start.tv_sec;
+		temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+	}
+	return temp;
+}
+
+//----------------------------------------------------------------------------
+
+void ts_add(timespec & MyTime, const timespec & MyAddend)
+{
+	if ((MyTime.tv_nsec+MyAddend.tv_nsec)>=1000000000)
+	{
+		MyTime.tv_sec+=MyAddend.tv_sec+1;
+		MyTime.tv_nsec = MyTime.tv_nsec+MyAddend.tv_nsec-1000000000;
+	}
+	else
+	{
+		MyTime.tv_sec += MyAddend.tv_sec;
+		MyTime.tv_nsec += MyAddend.tv_nsec;
+	}
+}
 
 
 

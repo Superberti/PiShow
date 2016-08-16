@@ -23,7 +23,7 @@ def RepresentsInt(s):
 
 print ("Raspi-Bilderrahmen-Konverter gestartet...")
 DisplayWidth=1920
-DisplayHeight=1200
+DisplayHeight=1080
 
 while 1==1:
     ImageList = glob.glob(rootdir+"*.JPG")

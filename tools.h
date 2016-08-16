@@ -10,7 +10,28 @@
 #include <limits.h>
 #include <stdarg.h>
 //----------------------------------------------------------------------------
+/// Eigene Fehlerklasse
+class TPiShowErr : public std::exception
+{
+	protected:
+		std::string what_;	///< Fehlertext
+		int mErrorCode;			///< Fehlercode
+	public:
+		TPiShowErr();
+		TPiShowErr(const TPiShowErr& rhs);
+		TPiShowErr(const std::string & what, const int aErrorCode);
+		TPiShowErr(const std::string & what);
+		~TPiShowErr() throw(){};
+		const char* what() const throw() { return what_.c_str(); };
+		int ErrorCode() const { return mErrorCode; };
+};
 
+class TOSErr : public TPiShowErr
+{
+	public:
+		TOSErr(const std::string & what, const int aErrorCode);
+		TOSErr(const int aOSErrorCode);
+};
 
 // mal eben schnell eine Zahl in einen String umwandeln...
 template<class T>std::string ToString(T Value){std::stringstream ss;ss<<Value;return ss.str();};
@@ -49,6 +70,17 @@ int strvprintf(std::string & aStr,const char* format, va_list paramList);
 /// Thread-Safe Fehlernummer in Fehlernachricht umwandeln
 /// \param aErrorNumber Betriebssystem-Fehlercode
 std::string GetOsErrString(const int aErrorNumber);
+
+/// Differenz von timespec-Strukturen bilden. Liefert end-start (Minuend-Subtrahent)
+/// \param start Subtrahend
+/// \param end Minuend
+/// \return Differenz
+timespec ts_diff(const timespec & start, const timespec & end);
+
+/// Summe von zwei timespec-Strukturen bilden (MyTime+=MyAddend
+/// \retval MyTime Wert der Summe
+/// \param MyAddend Summand
+void ts_add(timespec & MyTime, const timespec & MyAddend);
 
 
 #endif

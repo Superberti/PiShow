@@ -18,6 +18,7 @@
 #include "GaussianBlur.h"
 #include "SdlTools.h"
 #include <dirent.h>
+#include "TIRThread.h"
 
 using namespace std;
 
