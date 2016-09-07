@@ -33,11 +33,33 @@ while 1==1:
     if len(ImageList)>0:
         print("Neue Bilder erkannt. Starte Konversion...", file=sys.stdout, flush=True)
     else:
-        #print("Nächste Überprüfung in 60 Sekunden.", file=sys.stdout, flush=True)
-        time.sleep(60)
+        print("Nächste Überprüfung in 10 Sekunden.", file=sys.stdout, flush=True)
+        time.sleep(10)
 
     # Bilder konvertieren
     for ImageFileName in ImageList:
+        # Falls sich Bilder durch Samba noch in der Übertragung befinden, dann wird dieses Bild erst einmal übersprungen.
+        # Ist es das einzige Bild in der Liste, dann wird zusätzlich noch 10 Sekunden gewartet
+        try:
+                lsofOut=subprocess.check_output('lsof -t "'+ImageFileName+'"', shell=True, stderr=subprocess.STDOUT)
+                if lsofOut!="":
+                        lsofArgs=lsofOut.decode("utf-8")
+                        if RepresentsInt(lsofArgs)==True:
+                                print ("Bild: "+ImageFileName+" ist gerade im Zugriff (PID="+lsofArgs+"). Überspringe das Bild erst einmal...", file=sys.stdout, flush=True)
+                                time.sleep(1)
+                                if len(ImageList)==1:
+                                        time.sleep(10)
+                                continue
+                        else:
+                                print ("Komischer lsof-output:"+lsofOut, file=sys.stdout, flush=True)
+
+        except subprocess.CalledProcessError as lsofexc:
+                # Fehlercode 1 ist normal, falls nichts gefunden werden konnte
+                if lsofexc.returncode!=1:
+                        print ("lsof Fehlercode", lsofexc.returncode, lsofexc.output, file=sys.stdout, flush=True )
+                        print ("Überspringe Bild: "+ImageFileName, file=sys.stdout, flush=True)
+                        continue
+        
         BaseFileName=os.path.splitext(os.path.basename(ImageFileName))[0]
       
         NewFileName=os.path.join(convdir,BaseFileName+"_conv.JPG")
