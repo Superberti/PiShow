@@ -8,10 +8,76 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <vector>
 
 // -----------------------------------------------------------
 // -----------------------------------------------------------
 // -----------------------------------------------------------
+
+/// Parse-Funktion für Zeilen. Kommt auch mit
+/// in Anführungszeichen stehenden Parametern
+/// (also solche mit Whitespace) zurecht
+std::vector<std::string> ParseLine(const std::string& line)
+{
+	std::vector<std::string> result;
+	const char delim=' ';
+	std::string CurrentToken;
+	char CurrentChar;
+	const unsigned int LineSize=line.size();
+	bool qm_on=false; // state quotation mark
+	for (unsigned int i=0;i<LineSize;i++)
+	{
+		CurrentChar=line[i];
+		if (i==LineSize-1)
+		{
+			if (CurrentChar!=delim && CurrentChar!='"')
+				CurrentToken+=CurrentChar;
+			if (CurrentToken.size())
+			{
+				result.push_back(CurrentToken);
+				CurrentToken="";
+			}
+		}
+		if (CurrentChar=='"')
+		{
+			qm_on=!qm_on;
+			continue;
+		}
+		if (qm_on)
+		{
+			CurrentToken+=CurrentChar;
+		}
+		else if (CurrentChar==delim)
+		{
+			if (CurrentToken.size())
+			{
+				result.push_back(CurrentToken);
+				CurrentToken="";
+			}
+		}
+		else
+			CurrentToken+=CurrentChar;
+	}
+	return result;
+}
+
+//----------------------------------------------------------------------------
+
+void KillReturnAndEndl(char * MyString)
+{
+	const int s=strlen(MyString);
+	for (int i=0;i<s;i++)
+	{
+		if (MyString[i]=='\n' || MyString[i]=='\r')
+		{
+			MyString[i]=0;
+			break;
+		}
+	}
+	return;
+}
+
+//----------------------------------------------------------------------------
 
 // Eigene Exception-Klasse
 TPiShowErr::TPiShowErr(const std::string & what)
@@ -81,6 +147,17 @@ bool StringToInt(const std::string aValue, int & aNumber)
 	const char * start=aValue.c_str();
 	char * end=NULL;
 	aNumber=strtol(start,&end,10);
+	// end soll jetzt auch auf das Ende des strings zeigen, sonst Fehler!
+	return (end-start==(int)aValue.size());
+}
+
+//----------------------------------------------------------------------------
+
+bool HexStringToInt(const std::string aValue, int & aNumber)
+{
+	const char * start=aValue.c_str();
+	char * end=NULL;
+	aNumber=strtol(start,&end,16);
 	// end soll jetzt auch auf das Ende des strings zeigen, sonst Fehler!
 	return (end-start==(int)aValue.size());
 }

@@ -50,6 +50,7 @@
 		<Unit filename="threadtools.cpp" />
 		<Unit filename="threadtools.h" />
 		<Unit filename="tools.cpp" />
+		<Unit filename="tools.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

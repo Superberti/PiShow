@@ -9,7 +9,17 @@
 #include <sstream>
 #include <limits.h>
 #include <stdarg.h>
+
+/// String-Parsefunktion
+/// \param line Zu parsende Zeile
+/// \return result Einzelne Bestandteile der Zeile
+std::vector<std::string> ParseLine(const std::string& line);
+
+/// Return and Endline aus einem C-String löschen
+void KillReturnAndEndl(char * MyString);
+
 //----------------------------------------------------------------------------
+
 /// Eigene Fehlerklasse
 class TPiShowErr : public std::exception
 {
@@ -48,6 +58,12 @@ bool StringToDouble(const std::string aValue, double & aNumber);
 /// \retval aNumber Extrahierter numerischer Wert
 /// \return false: Umwandlung nicht erfolgreich
 bool StringToInt(const std::string aValue, int & aNumber);
+
+/// Hex-string -> integer. Es wird erwartet, dass im String nur hexadezimale Zahlen verwendet werden (OHNE 0x vorweg)
+/// \param aValue Zahlenstring
+/// \retval aNumber Extrahierter numerischer Wert
+/// \return false: Umwandlung nicht erfolgreich
+bool HexStringToInt(const std::string aValue, int & aNumber);
 
 /// Aktuelle Zeit in Mikrosekunden
 long long GetTime_us();

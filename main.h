@@ -62,8 +62,14 @@ std::vector<std::string> FindFilesInDir(const std::string & aDir);
 
 unsigned char* GetImage(std::string aFileName, int & width, int & height, int & aRawDataSize);
 
-bool WaitAndCheckForQuit(Uint32 aWaitTime);
+/// Wartet auf IR-Code oder Beendigung des Programms
+/// \param aWaitTime Wartezeit in ms
+/// \return 0=Keine Eingabe, 1=Programm soll beendet werden, 2=IR-Fernbedienungscode(s) liegen in der IR-Queue an
+int WaitAndCheckForQuit(Uint32 aWaitTime);
+
 void DoBlendEffect(BlendEffect aEffect, PiShowParams& aParams);
+
+bool CheckForIRImageCommand();
 
 // Load an image from "fname" and return an SDL_Texture with the content of the image
 void LoadTextures(PiShowParams& aParams);

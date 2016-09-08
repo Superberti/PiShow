@@ -126,10 +126,10 @@ void ImageTexture::CalcBorders()
 }
 
 SDL_Texture * TestTexture=NULL;
+std::auto_ptr<TIRThread> IRThread;
 
 int main(int argc, char** argv)
 {
-  std::auto_ptr<TIRThread> IRThread;
   IRThread.reset(new TIRThread());
   PiShowParams gParams;
   const int DefaultSleepTime_s=5;
@@ -260,39 +260,99 @@ int main(int argc, char** argv)
   int ErrCount=0;
   const int MaxErrCount=5;
 
-  bool quit=false;
+  int Action=0;
   //CreateTextTexture(gParams);
   vector<string> iAllFilesToDisplay;
   vector<string> iFilesToDisplay;
+  //vector<string> iDisplayedFiles;
   do
   {
+
     iAllFilesToDisplay=ExpandFileNames(iDirsOrFiles);
-    iFilesToDisplay=iAllFilesToDisplay;
+    iFilesToDisplay.clear();
     srand (time(NULL));
     ErrCount=0;
-    while (iFilesToDisplay.size()>0)
+    // Liste mit zufälliger Reihenfolge der Bilder aufbauen
+    if (DoRand)
+    {
+      vector<string> iTmpDisplayedFiles;
+      iTmpDisplayedFiles=iAllFilesToDisplay;
+      while (iTmpDisplayedFiles.size()>0)
+      {
+        int i=rand() % iTmpDisplayedFiles.size();
+        iFilesToDisplay.push_back(iTmpDisplayedFiles[i]);
+        iTmpDisplayedFiles.erase(iTmpDisplayedFiles.begin() + i);
+      }
+    }
+    else
+      iFilesToDisplay=iAllFilesToDisplay;
+
+    bool DoPause=false;
+    int CurrentImageNumber=0;
+    bool DoNothing=false;
+
+    while (CurrentImageNumber<(int)iFilesToDisplay.size())
     {
       try
       {
-        gParams.CurrentTexture=new ImageTexture();
-        int i=DoRand ? rand() % iFilesToDisplay.size() : 0;
-        //iFilesAlreadyDisplayed.push_back(iFilesToDisplay[i]);
-        gParams.CurrentTexture->ImageFilename=iFilesToDisplay[i];
-        iFilesToDisplay.erase(iFilesToDisplay.begin() + i);
-
-        LoadTextures(gParams);
-
-        DoBlendEffect((BlendEffect)MyBlendEffect, gParams);
-
-        quit= WaitAndCheckForQuit(SleepTime_s*1000);
-        //sleep(SleepTime_s);
-
-        if (gParams.OldTexture!=NULL)
+        if (!DoPause && !DoNothing)
         {
-          delete gParams.OldTexture;
+          gParams.CurrentTexture=new ImageTexture();
+          gParams.CurrentTexture->ImageFilename=iFilesToDisplay[CurrentImageNumber];
+
+          LoadTextures(gParams);
+
+          DoBlendEffect((BlendEffect)MyBlendEffect, gParams);
+
+          if (gParams.OldTexture!=NULL)
+          {
+            delete gParams.OldTexture;
+          }
+          gParams.OldTexture=gParams.CurrentTexture;
+          gParams.CurrentTexture=NULL;
         }
-        gParams.OldTexture=gParams.CurrentTexture;
-        gParams.CurrentTexture=NULL;
+        else
+        {
+          printf("Pause...\r\n");
+        }
+
+        bool DoNotTouchImageNumber=false;
+        Action= WaitAndCheckForQuit(SleepTime_s*1000);
+        DoNothing=false;
+        if (Action==2)
+        {
+          // Befehl der IR-Fernbedienung empfangen
+          TCritGuard cg(IRThread->IRCommandQueue.GetCritSec());
+          while (IRThread->IRCommandQueue.GetUnsafe().size()>0)
+          {
+            IRCode NewCode=IRThread->IRCommandQueue.GetUnsafe().front();
+            IRThread->IRCommandQueue.GetUnsafe().pop_front();
+            if (NewCode.Repeat==0 && (NewCode.Code==KEY_PREVIOUS || NewCode.Code==KEY_REWIND))
+            {
+              printf("Ein Bild zurück...\r\n");
+              CurrentImageNumber--;
+              CurrentImageNumber=max(0,CurrentImageNumber);
+              DoNotTouchImageNumber=true;
+            }
+            else if (NewCode.Repeat==0 && (NewCode.Code==KEY_NEXT || NewCode.Code==KEY_FASTFORWARD))
+            {
+              printf("Ein Bild vor...\r\n");
+              CurrentImageNumber++;
+              CurrentImageNumber=min(int(iFilesToDisplay.size())-2,CurrentImageNumber);
+              DoNotTouchImageNumber=true;
+            }
+            else if (NewCode.Repeat==0 && (NewCode.Code==KEY_PLAY || NewCode.Code==KEY_STOP))
+            {
+              DoPause=!DoPause;
+              DoNotTouchImageNumber=true;
+            }
+            else
+              DoNothing=true;
+          }
+
+        }
+        if (!DoNotTouchImageNumber)
+          CurrentImageNumber++;
 
       }
       catch (exception& aErr)
@@ -306,12 +366,12 @@ int main(int argc, char** argv)
         break;  // zu viele Fehler...
       }
 
-      if (quit)
+      if (Action==1)
         break;
     }
     if (ErrCount>=MaxErrCount)
       break;  // zu viele Fehler...
-    if (quit)
+    if (Action==1)
       break;
     if (iFilesToDisplay.size()==0)
     {
@@ -320,7 +380,7 @@ int main(int argc, char** argv)
       //iFilesAlreadyDisplayed.clear();
     }
   }
-  while (DoLoop && !quit && iAllFilesToDisplay.size()>0);
+  while (DoLoop && Action!=1 && iAllFilesToDisplay.size()>0);
 
   gParams.Cleanup();
   SDL_Quit();
@@ -329,11 +389,11 @@ int main(int argc, char** argv)
   return 0;
 }
 
-bool WaitAndCheckForQuit(Uint32 aWaitTime_ms)
+int WaitAndCheckForQuit(Uint32 aWaitTime_ms)
 {
-  bool quit=false;
+  int ExitAction=0;
   Uint32 start=SDL_GetTicks();
-  while(SDL_GetTicks()-start < aWaitTime_ms && !quit)
+  while(SDL_GetTicks()-start < aWaitTime_ms)
   {
     SDL_Event event;
     while (SDL_PollEvent(&event))
@@ -342,16 +402,27 @@ bool WaitAndCheckForQuit(Uint32 aWaitTime_ms)
       {
       case SDL_QUIT:
         /* Quit */
-        quit = true;
+        ExitAction = 1;
         break;
       case SDL_KEYDOWN:
-        quit=event.key.keysym.sym==SDLK_q;
+        ExitAction=event.key.keysym.sym==SDLK_q;
         break;
       }
     }
-    SDL_Delay(10);
+    if (ExitAction==0)
+    {
+      TCritGuard cg(IRThread->IRCommandQueue.GetCritSec());
+      if (IRThread->IRCommandQueue.GetUnsafe().size()>0)
+      {
+        ExitAction=2;
+      }
+    }
+    if (ExitAction==0)
+      SDL_Delay(10);
+    else
+      break;  // IR-Kommando oder Abbruch sofort zurückmelden
   }
-  return quit;
+  return ExitAction;
 }
 
 // Load an image from "fname" and return an SDL_Texture with the content of the image
@@ -678,7 +749,9 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
       }
       // Update the window surface (show the renderer)
       SDL_RenderPresent(aParams.Renderer);
-
+      // Schleife verlassen, falls jemand auf die IR-Fernbedienung gedrück hat
+      if (CheckForIRImageCommand())
+        break;
       SDL_Delay(5);
     }
     break;
@@ -700,6 +773,26 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
     break;
   }
   }
+}
+
+bool CheckForIRImageCommand()
+{
+  bool res=false;
+  // Gibt es in der FB-Queue ein Kommando, welches Bildbezogen ist? (Vor, Zurück, Pause etc.)
+  TCritGuard cg(IRThread->IRCommandQueue.GetCritSec());
+  if (IRThread->IRCommandQueue.GetUnsafe().size()>0)
+  {
+    deque<IRCode>::iterator it;
+    for (it=IRThread->IRCommandQueue.GetUnsafe().begin(); it!=IRThread->IRCommandQueue.GetUnsafe().end(); ++it)
+    {
+      if (it->Code==KEY_PREVIOUS || it->Code==KEY_NEXT || it->Code==KEY_PLAY || it->Code==KEY_STOP || it->Code==KEY_FASTFORWARD || it->Code==KEY_REWIND)
+      {
+        res=true;
+        break;
+      }
+    }
+  }
+  return res;
 }
 
 vector<string> ExpandFileNames(const vector<string> & aDirsOrFileNames)

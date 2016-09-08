@@ -13,6 +13,7 @@
 
 #include "TIRThread.h"
 
+#define SOCK_PATH "/var/run/lirc/lircd"
 
 // Einfacher iterativer Server für Informationszwecke.
 // Wird von anderen Dämonen benutzt, um festzustellen, wer
@@ -34,55 +35,16 @@ TIRThread::~TIRThread()
 
 // ----------------------------------------------------------------------------
 
+#define str_length 256
+
 void TIRThread::Execute()
 {
   fprintf(stdout, "Starte Fernbedienungs-Thread.");
-  /*
-  struct lirc_config *config;
-  char *code;
-  char *c;
-  try
-  {
-    if( lirc_init("irexec",1) == -1)
-      throw TOSErr("lirc_init failed.",errno);
 
-    if (lirc_readconfig(NULL,&config,NULL) == -1)
-    {
-      lirc_deinit();
-      throw TOSErr("lirc_readconfig failed.",errno);
-    }
-
-    while( lirc_nextcode(&code) == 0 && !Terminated.Get())
-    {
-      if (code == NULL)
-      {
-        // 100 ms Pause
-        nanosleep((const struct timespec[])
-        {
-          {
-            0, 100000000L
-          }
-        }, NULL);
-        continue;
-      }
-      while(( ret = lirc_code2char( config,code,&c)) == 0 && c != NULL)
-      {
-        fprintf(stderr,"Received command \"%%s\"\\n",c);
-        //system(c);
-      }
-      free(code);
-      if(ret==-1)
-        break;
-    }
-
-    lirc_freeconfig(config);
-    lirc_deinit();*/
-
-#define SOCK_PATH "/var/run/lirc/lircd"
   //HandleCommand(1);
   int t, len;
   struct sockaddr_un remote;
-  char str[256];
+  char str[str_length];
 
   try
   {
@@ -101,25 +63,35 @@ void TIRThread::Execute()
     if (connect(mLircSocket, (struct sockaddr *)&remote, len) == -1)
     {
       throw TOSErr("connect failed.",errno);
-      //perror("connect");
-      //exit(1);
     }
 
     fprintf(stdout,"Connected.\n");
 
     while(!TerminateRequested.Get())
     {
-      /*
-        if (send(s, str, strlen(str), 0) == -1)
-        {
-          perror("send");
-          exit(1);
-        }*/
 
-      if ((t=recv(mLircSocket, str, 100, 0)) > 0)
+      if ((t=recv(mLircSocket, str, str_length-1, 0)) > 0)
       {
         str[t] = '\0';
-        fprintf(stdout,"%s", str);
+        //fprintf(stdout,"%s\r\n",str);
+        KillReturnAndEndl(str);
+        std::string irString=std::string(str);
+        std::vector<std::string> mCommands=ParseLine(irString);
+        if (mCommands.size()>=3)
+        {
+          std::string IRNumberString=mCommands[0].substr(mCommands[0].size()-4,4);
+          int IRNumber=0;
+          int RepeatCode=0;
+          bool res=HexStringToInt(IRNumberString, IRNumber);
+          res&=HexStringToInt(mCommands[1],RepeatCode);
+          fprintf(stdout,"Taste %d gedrückt. Res: %d RepeatCode: %d String %s\r\n", IRNumber,res, RepeatCode, IRNumberString.c_str());
+          {
+            TCritGuard cg(IRCommandQueue.GetCritSec());
+            // Bis zu 10 IR-Kommandos werden in der Queue zwischengespeichert
+            if (IRCommandQueue.GetUnsafe().size()<=10)
+              IRCommandQueue.GetUnsafe().push_back(IRCode(IRNumber, RepeatCode));
+          }
+        }
         fflush(stdout);
       }
       else
@@ -132,8 +104,6 @@ void TIRThread::Execute()
       }
     }
 
-    close(mLircSocket);
-
   }
   catch(std::exception & err)
   {
@@ -143,6 +113,7 @@ void TIRThread::Execute()
   {
     fprintf(stderr, "Unknown exception in info thread.");
   }
+  close(mLircSocket);
   fprintf(stdout, "Beende Fernbedienungs-Thread.");
 }
 
