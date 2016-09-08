@@ -134,6 +134,7 @@ void * TThread::ThreadFunc(void * aInstance)
 void TThread::Terminate()
 {
   TerminateRequested.Set(true);
+  printf("TerminateRequested gesetzt...\r\n");
 }
 
 void TThread::WaitFor()

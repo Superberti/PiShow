@@ -129,6 +129,8 @@ SDL_Texture * TestTexture=NULL;
 
 int main(int argc, char** argv)
 {
+  std::auto_ptr<TIRThread> IRThread;
+  IRThread.reset(new TIRThread());
   PiShowParams gParams;
   const int DefaultSleepTime_s=5;
   int SleepTime_s=DefaultSleepTime_s;
@@ -184,8 +186,8 @@ int main(int argc, char** argv)
   //vector<string> iFilesAlreadyDisplayed;
   //printf("Anzahl anzuzeigender Dateien: %d\r\n",iFilesToDisplay.size());
   //for (unsigned int i=0;i<iFilesToDisplay.size();i++)
-    //printf("%s\r\n",iFilesToDisplay[i].c_str());
-    //std::cout << "Non-option #" << i << ": " << parse.nonOption(i) << "\n";
+  //printf("%s\r\n",iFilesToDisplay[i].c_str());
+  //std::cout << "Non-option #" << i << ": " << parse.nonOption(i) << "\n";
 
   // Initialize SDL
   check_error_sdl(SDL_Init(SDL_INIT_VIDEO) != 0, "Unable to initialize SDL");
@@ -322,6 +324,7 @@ int main(int argc, char** argv)
 
   gParams.Cleanup();
   SDL_Quit();
+  IRThread.reset();
   fprintf(stderr,"Programm normal beendet!\r\n");
   return 0;
 }
@@ -337,13 +340,13 @@ bool WaitAndCheckForQuit(Uint32 aWaitTime_ms)
     {
       switch (event.type)
       {
-        case SDL_QUIT:
-          /* Quit */
-          quit = true;
-          break;
-        case SDL_KEYDOWN:
-          quit=event.key.keysym.sym==SDLK_q;
-          break;
+      case SDL_QUIT:
+        /* Quit */
+        quit = true;
+        break;
+      case SDL_KEYDOWN:
+        quit=event.key.keysym.sym==SDLK_q;
+        break;
       }
     }
     SDL_Delay(10);
@@ -585,117 +588,117 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
 {
   switch(aEffect)
   {
-    case ZoomInOut:
+  case ZoomInOut:
+  {
+    const int NumSteps=300;
+    for (int i=0; i<=NumSteps; i++)
+    {
+      aParams.CurrentTexture->ScreenRect.w = aParams.CurrentTexture->TextureWidth*i/double(NumSteps);
+      aParams.CurrentTexture->ScreenRect.h = aParams.CurrentTexture->TextureHeight*i/double(NumSteps);
+
+      aParams.OldTexture->ScreenRect.w = aParams.OldTexture->TextureWidth*(1-i/double(NumSteps));/*+1920*10/double(NumSteps)*/;
+      aParams.OldTexture->ScreenRect.h = aParams.OldTexture->TextureHeight*(1-i/double(NumSteps));/*+1200*10/double(NumSteps)*/;
+      aParams.OldTexture->ScreenRect.x = aParams.OldTexture->TextureWidth*(i/double(NumSteps))-1;
+      aParams.OldTexture->ScreenRect.y = aParams.OldTexture->TextureHeight*(i/double(NumSteps))-1;
+
+      // Clear the window content (using the default renderer color)
+      //SDL_RenderClear(aRenderer);
+
+      // Copy the texture on the renderer
+      if (aParams.OldTexture!=NULL && aParams.OldTexture->Texture!=NULL)
+        SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &aParams.OldTexture->ScreenRect);
+      // Copy the texture on the renderer
+      SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &aParams.CurrentTexture->ScreenRect);
+
+      // Update the window surface (show the renderer)
+      SDL_RenderPresent(aParams.Renderer);
+
+      SDL_Delay(10);
+    }
+    break;
+  }
+  case AlphaBlending:
+  {
+    check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
+    if (aParams.TextTexture!=NULL)
+      check_error_sdl(SDL_SetTextureBlendMode(aParams.TextTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode text texture");
+    if (aParams.CurrentTexture->Stripe1Texture!=NULL)
+      check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Stripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode CurrentStripe1Texture");
+    if(aParams.CurrentTexture->Stripe2Texture!=NULL)
+      check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Stripe2Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode CurrentStripe2Texture");
+    if (aParams.OldTexture!=NULL && aParams.OldTexture->Texture!=NULL)
+    {
+      check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode old texture");
+      if(aParams.OldTexture->Stripe1Texture!=NULL)
+        check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Stripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode OldStripe1Texture");
+      if(aParams.OldTexture->Stripe2Texture!=NULL)
+        check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Stripe2Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode OldStripe2Texture");
+    }
+    const int NumSteps=255;
+    for (int i=0; i<=NumSteps; i+=2)
+    {
+      SDL_SetTextureAlphaMod( aParams.CurrentTexture->Texture, i );
+      if (aParams.CurrentTexture->Stripe1Texture!=NULL)
+        SDL_SetTextureAlphaMod( aParams.CurrentTexture->Stripe1Texture, i );
+      if (aParams.CurrentTexture->Stripe2Texture!=NULL)
+        SDL_SetTextureAlphaMod( aParams.CurrentTexture->Stripe2Texture, i );
+
+      if (aParams.OldTexture!=NULL && aParams.OldTexture->Texture!=NULL)
       {
-        const int NumSteps=300;
-        for (int i=0; i<=NumSteps; i++)
-        {
-          aParams.CurrentTexture->ScreenRect.w = aParams.CurrentTexture->TextureWidth*i/double(NumSteps);
-          aParams.CurrentTexture->ScreenRect.h = aParams.CurrentTexture->TextureHeight*i/double(NumSteps);
+        SDL_SetTextureAlphaMod( aParams.OldTexture->Texture, NumSteps-i );
+        if(aParams.OldTexture->Stripe1Texture!=NULL)
+          SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe1Texture, NumSteps-i );
+        if(aParams.OldTexture->Stripe2Texture!=NULL)
+          SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe2Texture, NumSteps-i );
 
-          aParams.OldTexture->ScreenRect.w = aParams.OldTexture->TextureWidth*(1-i/double(NumSteps));/*+1920*10/double(NumSteps)*/;
-          aParams.OldTexture->ScreenRect.h = aParams.OldTexture->TextureHeight*(1-i/double(NumSteps));/*+1200*10/double(NumSteps)*/;
-          aParams.OldTexture->ScreenRect.x = aParams.OldTexture->TextureWidth*(i/double(NumSteps))-1;
-          aParams.OldTexture->ScreenRect.y = aParams.OldTexture->TextureHeight*(i/double(NumSteps))-1;
-
-          // Clear the window content (using the default renderer color)
-          //SDL_RenderClear(aRenderer);
-
-          // Copy the texture on the renderer
-          if (aParams.OldTexture!=NULL && aParams.OldTexture->Texture!=NULL)
-            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &aParams.OldTexture->ScreenRect);
-          // Copy the texture on the renderer
-          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &aParams.CurrentTexture->ScreenRect);
-
-          // Update the window surface (show the renderer)
-          SDL_RenderPresent(aParams.Renderer);
-
-          SDL_Delay(10);
-        }
-        break;
+        if(aParams.OldTexture->Stripe1Texture!=NULL)
+          SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1);
+        if(aParams.OldTexture->Stripe2Texture!=NULL)
+          SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2);
+        SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &aParams.OldTexture->ScreenRect);
       }
-    case AlphaBlending:
+      // Copy the texture on the renderer
+      if (aParams.CurrentTexture->Stripe1Texture!=NULL)
+        SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1);
+      if (aParams.CurrentTexture->Stripe2Texture!=NULL)
+        SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2);
+      SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &aParams.CurrentTexture->ScreenRect);
+
+      //roundedBoxRGBA(aParams.Renderer,aParams.ScreenWidth/2-200,aParams.ScreenHeight/2-200,aParams.ScreenWidth/2+200,aParams.ScreenHeight/2+200,20,255,80,30,127);
+      SDL_Rect TextRect;
+      if (aParams.TextTexture!=NULL)
       {
-        check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode current texture");
-        if (aParams.TextTexture!=NULL)
-        check_error_sdl(SDL_SetTextureBlendMode(aParams.TextTexture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode text texture");
-        if (aParams.CurrentTexture->Stripe1Texture!=NULL)
-          check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Stripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode CurrentStripe1Texture");
-        if(aParams.CurrentTexture->Stripe2Texture!=NULL)
-          check_error_sdl(SDL_SetTextureBlendMode(aParams.CurrentTexture->Stripe2Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode CurrentStripe2Texture");
-        if (aParams.OldTexture!=NULL && aParams.OldTexture->Texture!=NULL)
-        {
-          check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode old texture");
-          if(aParams.OldTexture->Stripe1Texture!=NULL)
-            check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Stripe1Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode OldStripe1Texture");
-          if(aParams.OldTexture->Stripe2Texture!=NULL)
-            check_error_sdl(SDL_SetTextureBlendMode(aParams.OldTexture->Stripe2Texture, SDL_BLENDMODE_BLEND),"Setting alpha blend mode OldStripe2Texture");
-        }
-        const int NumSteps=255;
-        for (int i=0; i<=NumSteps; i+=2)
-        {
-          SDL_SetTextureAlphaMod( aParams.CurrentTexture->Texture, i );
-          if (aParams.CurrentTexture->Stripe1Texture!=NULL)
-            SDL_SetTextureAlphaMod( aParams.CurrentTexture->Stripe1Texture, i );
-          if (aParams.CurrentTexture->Stripe2Texture!=NULL)
-            SDL_SetTextureAlphaMod( aParams.CurrentTexture->Stripe2Texture, i );
+        SDL_QueryTexture(aParams.TextTexture, NULL, NULL, &TextRect.w, &TextRect.h);
+        TextRect.w+=i;
+        TextRect.h+=i;
+        TextRect.x=aParams.ScreenWidth/2-TextRect.w/2+i;
+        TextRect.y=aParams.ScreenHeight/2-TextRect.h/2+i;
+        SDL_SetTextureAlphaMod( aParams.TextTexture, i );
+        SDL_RenderCopy(aParams.Renderer, aParams.TextTexture, NULL, &TextRect);
+      }
+      // Update the window surface (show the renderer)
+      SDL_RenderPresent(aParams.Renderer);
 
-          if (aParams.OldTexture!=NULL && aParams.OldTexture->Texture!=NULL)
-          {
-            SDL_SetTextureAlphaMod( aParams.OldTexture->Texture, NumSteps-i );
-            if(aParams.OldTexture->Stripe1Texture!=NULL)
-              SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe1Texture, NumSteps-i );
-            if(aParams.OldTexture->Stripe2Texture!=NULL)
-              SDL_SetTextureAlphaMod( aParams.OldTexture->Stripe2Texture, NumSteps-i );
-
-            if(aParams.OldTexture->Stripe1Texture!=NULL)
-              SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe1Texture, NULL, &aParams.OldTexture->ScreenRectStripe1);
-            if(aParams.OldTexture->Stripe2Texture!=NULL)
-              SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Stripe2Texture, NULL, &aParams.OldTexture->ScreenRectStripe2);
-            SDL_RenderCopy(aParams.Renderer, aParams.OldTexture->Texture, NULL, &aParams.OldTexture->ScreenRect);
-          }
-          // Copy the texture on the renderer
-          if (aParams.CurrentTexture->Stripe1Texture!=NULL)
-            SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe1Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe1);
-          if (aParams.CurrentTexture->Stripe2Texture!=NULL)
-            SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Stripe2Texture, NULL, &aParams.CurrentTexture->ScreenRectStripe2);
-          SDL_RenderCopy(aParams.Renderer, aParams.CurrentTexture->Texture, NULL, &aParams.CurrentTexture->ScreenRect);
-
-          //roundedBoxRGBA(aParams.Renderer,aParams.ScreenWidth/2-200,aParams.ScreenHeight/2-200,aParams.ScreenWidth/2+200,aParams.ScreenHeight/2+200,20,255,80,30,127);
-          SDL_Rect TextRect;
-          if (aParams.TextTexture!=NULL)
-          {
-            SDL_QueryTexture(aParams.TextTexture, NULL, NULL, &TextRect.w, &TextRect.h);
-            TextRect.w+=i;
-            TextRect.h+=i;
-            TextRect.x=aParams.ScreenWidth/2-TextRect.w/2+i;
-            TextRect.y=aParams.ScreenHeight/2-TextRect.h/2+i;
-            SDL_SetTextureAlphaMod( aParams.TextTexture, i );
-            SDL_RenderCopy(aParams.Renderer, aParams.TextTexture, NULL, &TextRect);
-          }
-          // Update the window surface (show the renderer)
-          SDL_RenderPresent(aParams.Renderer);
-
-          SDL_Delay(5);
-        }
-        break;
-      }
-    case AlphaMoving:
-      {
-        break;
-      }
-    case MovingToRight:
-      {
-        break;
-      }
-    case MovingToLeft:
-      {
-        break;
-      }
-    case Mosaic:
-      {
-        break;
-      }
+      SDL_Delay(5);
+    }
+    break;
+  }
+  case AlphaMoving:
+  {
+    break;
+  }
+  case MovingToRight:
+  {
+    break;
+  }
+  case MovingToLeft:
+  {
+    break;
+  }
+  case Mosaic:
+  {
+    break;
+  }
   }
 }
 
@@ -727,7 +730,7 @@ vector<string> ExpandFileNames(const vector<string> & aDirsOrFileNames)
       {
         // Verzeichnis
         vector<string>iFiles=FindFilesInDir(aDirsOrFileNames[i]);
-        for (unsigned int t=0;t<iFiles.size();t++)
+        for (unsigned int t=0; t<iFiles.size(); t++)
           iFileNames.push_back(iFiles[t]);
       }
     }
@@ -779,7 +782,7 @@ void CreateTextTexture(PiShowParams& aParams)
     if(!font)
       throw runtime_error( "TTF_OpenFont failed! TTF Error: " + string(TTF_GetError() ));
 
-    SDL_Color color={0,0,0};
+    SDL_Color color= {0,0,0};
     if(!(surface=TTF_RenderText_Blended(font,"Oliver Rutsch!",color)))
       throw runtime_error( "TTF_RenderText_Blended failed! TTF Error: " + string(TTF_GetError() ));
 

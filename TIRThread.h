@@ -7,6 +7,7 @@
 class TIRThread : public TThread
 {
 	protected:
+    int mLircSocket;
 		/// Threadfunktion, kümmert sich um die Verbindung
 		void Execute();
 		/// Kommando bearbeiten

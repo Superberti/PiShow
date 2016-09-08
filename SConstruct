@@ -16,4 +16,4 @@ env['LIBS']=['m','SDL2_image','SDL2_ttf','SDL2',static_jpeg_lib,'SDL2_gfx','pthr
 #env['LIBPATH']=['/opt/libjpeg-turbo/lib32/']
 env['CPPPATH']=['/opt/libjpeg-turbo/include/','/opt/vc/include']
 
-env.Program('PiShow',['GaussianBlur.cpp','SdlTools.cpp','main.cpp','tools.cpp','threadtools.cpp'])
+env.Program('PiShow',['GaussianBlur.cpp','SdlTools.cpp','main.cpp','tools.cpp','threadtools.cpp','TIRThread.cpp'])
