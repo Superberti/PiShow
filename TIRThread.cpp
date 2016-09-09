@@ -16,7 +16,7 @@
 
 #define SOCK_PATH "/var/run/lirc/lircd"
 
-#define DISPLAY_POWER_PIN 18
+#define DISPLAY_POWER_PIN 27
 
 // Einfacher iterativer Server für Informationszwecke.
 // Wird von anderen Dämonen benutzt, um festzustellen, wer
