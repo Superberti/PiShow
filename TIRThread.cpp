@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <wiringPi.h>
 //#include <lirc/lirc_client.h>
 #include "tools.h"
 
@@ -15,11 +16,13 @@
 
 #define SOCK_PATH "/var/run/lirc/lircd"
 
+#define DISPLAY_POWER_PIN 18
+
 // Einfacher iterativer Server für Informationszwecke.
 // Wird von anderen Dämonen benutzt, um festzustellen, wer
 // gerade verbunden ist usw.
 TIRThread::TIRThread()
-: mLircSocket(0)
+  : mLircSocket(0)
 {
   // Am Ende des Konstruktors: Thread starten
   Run();
@@ -45,6 +48,23 @@ void TIRThread::Execute()
   int t, len;
   struct sockaddr_un remote;
   char str[str_length];
+  bool gpio_ok=false;
+  try
+  {
+    // Starte die WiringPi-Api (wichtig)
+    if (wiringPiSetupGpio() == -1)
+      throw TOSErr("wiringPiSetupGpio failed.",errno);
+    pinMode(DISPLAY_POWER_PIN, OUTPUT);
+    gpio_ok=true;
+  }
+  catch(std::exception & err)
+  {
+    fprintf(stderr, "Exception in gpio init: %s",err.what());
+  }
+  catch(...)
+  {
+    fprintf(stderr, "Unknown exception in gpio init.");
+  }
 
   try
   {
@@ -85,12 +105,24 @@ void TIRThread::Execute()
           bool res=HexStringToInt(IRNumberString, IRNumber);
           res&=HexStringToInt(mCommands[1],RepeatCode);
           fprintf(stdout,"Taste %d gedrückt. Res: %d RepeatCode: %d String %s\r\n", IRNumber,res, RepeatCode, IRNumberString.c_str());
+
+          if (RepeatCode==0 && (IRNumber==KEY_PLAY || IRNumber==KEY_STOP || IRNumber==KEY_REWIND || IRNumber==KEY_FASTFORWARD || IRNumber==KEY_NEXT || IRNumber==KEY_PREVIOUS))
           {
             TCritGuard cg(IRCommandQueue.GetCritSec());
-            // Bis zu 10 IR-Kommandos werden in der Queue zwischengespeichert
-            if (IRCommandQueue.GetUnsafe().size()<=10)
+            // Bis zu 10 IR-Kommandos werden in der Queue zwischengespeichert. Aber nur Kommandos, die der Bildsteuerung dienen
+            if (IRCommandQueue.GetUnsafe().size()<=10 )
               IRCommandQueue.GetUnsafe().push_back(IRCode(IRNumber, RepeatCode));
           }
+          else if (RepeatCode==0 && IRNumber==KEY_POWER && gpio_ok)
+          {
+            // Display ein/ausschalten
+            digitalWrite(DISPLAY_POWER_PIN, 1);
+            // Warte 200 ms
+            delay(200);
+            digitalWrite(DISPLAY_POWER_PIN, 0);
+            delay(200);
+          }
+
         }
         fflush(stdout);
       }

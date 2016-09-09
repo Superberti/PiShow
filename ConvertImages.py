@@ -33,7 +33,7 @@ while 1==1:
     if len(ImageList)>0:
         print("Neue Bilder erkannt. Starte Konversion...", file=sys.stdout, flush=True)
     else:
-        print("Nächste Überprüfung in 10 Sekunden.", file=sys.stdout, flush=True)
+#        print("Nächste Überprüfung in 10 Sekunden.", file=sys.stdout, flush=True)
         time.sleep(10)
 
     # Bilder konvertieren
