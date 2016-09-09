@@ -16,7 +16,7 @@ void FlipSurface(SDL_Surface* pSurface, bool aFlipHorizontal)
   {
     // Spiegelung an der horizontalen(!) Achse. Eigentlich ist die Bezeichnung verwirrend, aber kompatibel mit der libSDL
     unsigned char* pBuffer=new unsigned char[pSurface->pitch];
-    for (int y=0;y<pSurface->h/2;y++)
+    for (int y=0; y<pSurface->h/2; y++)
     {
       // temporäre Kopie einer Zeile in den Puffer
       memcpy(pBuffer,(unsigned char *)(pSurface->pixels)+(pSurface->h-y-1)*pSurface->pitch,pSurface->pitch);
@@ -31,11 +31,11 @@ void FlipSurface(SDL_Surface* pSurface, bool aFlipHorizontal)
   {
     Uint32 Buf;
     // Spiegelung an der vertikalen Achse
-    for (int y=0;y<pSurface->h;y++)
+    for (int y=0; y<pSurface->h; y++)
     {
       unsigned char *pB=(unsigned char *)(pSurface->pixels)+y*pSurface->pitch;
       Uint32 *pStart=(Uint32*)pB;
-      for (int x=0;x<pSurface->w/2;x++)
+      for (int x=0; x<pSurface->w/2; x++)
       {
         Buf=pStart[pSurface->w-x-1];
         pStart[pSurface->w-x-1]=pStart[x];
@@ -66,8 +66,12 @@ void BlurSurface(SDL_Surface* pSurface, unsigned int r)
 
 void BlurRGBA(int aWidth, int aHeight, int aPitch, unsigned char * pPixels, Uint32 aPixelFormat, int r, bool sw)
 {
-  // Kein Blur, falls der Blur-Radius größer als dioe Höhe oder Breite des Bildes ist.
-  if (aWidth<r || aHeight<r)
+  // Kein Blur, falls der Blur-Radius größer als die Höhe des Bildes ist.
+  if (aHeight / 2 <= r)
+  {
+    r = aHeight % 2 == 0 ? aHeight / 2 - 1 : aHeight / 2;
+  }
+  if (r<2)
     return;
   const int NumBytesCurrent=aPitch*aHeight;
   // Aufteilung in einzelne Farbkanäle

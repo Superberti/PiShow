@@ -44,9 +44,9 @@
 	<string.h>
 	<unistd.h>
 
-1452268650 /opt/libjpeg-turbo/include//turbojpeg.h
+1471204918 /opt/libjpeg-turbo/include//turbojpeg.h
 
-1463996987 source:/home/pi/PiShow/tools.cpp
+1473318304 source:/home/pi/PiShow/tools.cpp
 	<exception>
 	<iostream>
 	"tools.h"
@@ -56,8 +56,9 @@
 	<stdarg.h>
 	<string.h>
 	<unistd.h>
+	<vector>
 
-1464080918 /home/pi/PiShow/tools.h
+1473327971 /home/pi/PiShow/tools.h
 	<exception>
 	<string>
 	<errno.h>
@@ -66,10 +67,12 @@
 	<limits.h>
 	<stdarg.h>
 
-1463992825 source:/home/pi/PiShow/main.cpp
+1473354480 source:/home/pi/PiShow/main.cpp
 	<SDL2/SDL.h>
 	<SDL2/SDL_opengles2.h>
 	<SDL2/SDL_image.h>
+	<SDL2/SDL2_gfxPrimitives.h>
+	<SDL2/SDL_ttf.h>
 	<iostream>
 	<turbojpeg.h>
 	<iostream>
@@ -85,31 +88,33 @@
 	"GaussianBlur.h"
 	"SdlTools.h"
 	<dirent.h>
+	"TIRThread.h"
 
-1454675454 /home/pi/PiShow/main.h
+1473334310 /home/pi/PiShow/main.h
 	<string>
+	<functional>
 	"optionparser.h"
 	"tools.h"
 
-1452780589 /home/pi/PiShow/optionparser.h
+1471239178 /home/pi/PiShow/optionparser.h
 	<intrin.h>
 
-1454586693 /home/pi/PiShow/GaussianBlur.h
+1471239178 /home/pi/PiShow/GaussianBlur.h
 	<math.h>
 	<stdio.h>
 	<vector>
 	<string>
 
-1463494222 source:/home/pi/PiShow/GaussianBlur.cpp
+1471239178 source:/home/pi/PiShow/GaussianBlur.cpp
 	"GaussianBlur.h"
 	<SDL2/SDL.h>
 	<stdexcept>
 	"SdlTools.h"
 	"tools.h"
 
-1452863982 /home/pi/PiShow/SdlTools.h
+1471239178 /home/pi/PiShow/SdlTools.h
 
-1452863901 source:/home/pi/PiShow/SdlTools.cpp
+1471239178 source:/home/pi/PiShow/SdlTools.cpp
 	<stdio.h>
 	<stdlib.h>
 	<assert.h>
@@ -118,4 +123,31 @@
 	"SdlTools.h"
 	<string>
 	<SDL2/SDL.h>
+
+1473333210 /home/pi/PiShow/TIRThread.h
+	"threadtools.h"
+	<deque>
+
+1471341847 /home/pi/PiShow/threadtools.h
+	<pthread.h>
+	<memory>
+	"tools.h"
+
+1473311578 source:/home/pi/PiShow/threadtools.cpp
+	"threadtools.h"
+	<memory>
+
+1473333609 source:/home/pi/PiShow/TIRThread.cpp
+	<errno.h>
+	<unistd.h>
+	<stdarg.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<sys/un.h>
+	"tools.h"
+	"TIRThread.h"
 
