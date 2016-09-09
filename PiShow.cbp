@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="~/Pictures/conv/DSC01423_conv.JPG" />
+				<Option parameters="~/Pictures/Anzeige/div1982_021_conv.JPG" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -37,6 +37,8 @@
 		<Linker>
 			<Add option="`sdl2-config --libs` -lSDL2_image -lSDL2_ttf" />
 			<Add library="/opt/libjpeg-turbo/lib32/libturbojpeg.a" />
+			<Add library="pthread" />
+			<Add library="wiringPi" />
 		</Linker>
 		<Unit filename="GaussianBlur.cpp" />
 		<Unit filename="GaussianBlur.h" />
