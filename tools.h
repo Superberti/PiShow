@@ -100,5 +100,6 @@ timespec ts_diff(const timespec & start, const timespec & end);
 /// \param MyAddend Summand
 void ts_add(timespec & MyTime, const timespec & MyAddend);
 
+void DebugOut(std::string aOut);
 
 #endif

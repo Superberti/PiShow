@@ -154,7 +154,5 @@ public:
   }
 };
 
-void DebugOut(std::string aOut);
-
 
 #endif // MAIN_H_INCLUDED

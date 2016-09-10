@@ -107,7 +107,7 @@ void TIRThread::Execute()
 
           if (RepeatCode==0 && (IRNumber==KEY_PLAY || IRNumber==KEY_STOP || IRNumber==KEY_REWIND || IRNumber==KEY_FASTFORWARD || IRNumber==KEY_NEXT || IRNumber==KEY_PREVIOUS))
           {
-            fprintf(stdout,"Taste %d gedrückt. Res: %d RepeatCode: %d String %s\r\n", IRNumber,res, RepeatCode, IRNumberString.c_str());
+            DebugOut(strprintf("Taste %d gedrückt. Res: %d RepeatCode: %d String %s\r\n", IRNumber,res, RepeatCode, IRNumberString.c_str()));
             TCritGuard cg(IRCommandQueue.GetCritSec());
             // Bis zu 10 IR-Kommandos werden in der Queue zwischengespeichert. Aber nur Kommandos, die der Bildsteuerung dienen
             if (IRCommandQueue.GetUnsafe().size()<=10 )
@@ -115,6 +115,7 @@ void TIRThread::Execute()
           }
           else if (RepeatCode==0 && IRNumber==KEY_POWER && gpio_ok)
           {
+            printf("Schalte Monitor ein/aus...\r\n");
             // Display ein/ausschalten
             digitalWrite(DISPLAY_POWER_PIN, 1);
             // Warte 200 ms
