@@ -120,7 +120,7 @@ struct Arg: public option::Arg
   }
 };
 
-enum  optionIndex { UNKNOWN, HELP, TIME, LOOP, EFFECT, RANDOM };
+enum  optionIndex { UNKNOWN, HELP, TIME, LOOP, EFFECT, RANDOM, VERBOSE };
 const option::Descriptor usage[] =
 {
   {
@@ -130,6 +130,7 @@ const option::Descriptor usage[] =
   {HELP,    0,"", "help",Arg::None,    "  --help  \tPrint usage and exit." },
   {TIME,    0,"t", "time",Arg::Numeric, "  --time, -t  \tTime between two images." },
   {LOOP,    0,"l", "loop",Arg::None,   "  --loop, -l \tLoop forever." },
+  {VERBOSE, 0,"v", "verbose",Arg::None,   "  --verbose, -v \tShow verbose logging information." },
   {EFFECT,  0,"e", "effect",Arg::Numeric, "  --effect, -e  \tUse effect number x to blend images." },
   {RANDOM,  0,"r", "loop",Arg::None,   "  --rand, -r \tRandom image sequence." },
   {
@@ -153,6 +154,7 @@ public:
   }
 };
 
+void DebugOut(std::string aOut);
 
 
 #endif // MAIN_H_INCLUDED

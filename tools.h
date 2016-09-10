@@ -10,6 +10,8 @@
 #include <limits.h>
 #include <stdarg.h>
 
+extern bool VerboseLogging;
+
 /// String-Parsefunktion
 /// \param line Zu parsende Zeile
 /// \return result Einzelne Bestandteile der Zeile

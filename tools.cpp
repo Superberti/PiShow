@@ -253,6 +253,11 @@ void ts_add(timespec & MyTime, const timespec & MyAddend)
 	}
 }
 
+bool VerboseLogging=false;
 
-
-
+void DebugOut(std::string aOut)
+{
+  if(!VerboseLogging)
+    return;
+  fprintf(stdout, aOut.c_str());
+}

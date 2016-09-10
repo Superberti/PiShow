@@ -174,6 +174,7 @@ int main(int argc, char** argv)
 
   bool DoLoop=options[LOOP];
   bool DoRand=options[RANDOM];
+  VerboseLogging=options[VERBOSE];
 
   for (option::Option* opt = options[UNKNOWN]; opt; opt = opt->next())
     std::cout << "Unknown option: " << opt->name << "\n";
@@ -201,7 +202,7 @@ int main(int argc, char** argv)
     check_error_sdl(SDL_GetCurrentDisplayMode(i, &current),"SDL_GetCurrentDisplayMode failed.");
 
     // On success, print the current display mode.
-    printf("Display #%d: current display mode is %dx%dpx @ %dhz. \n", i, current.w, current.h, current.refresh_rate);
+    DebugOut(strprintf("Display #%d: current display mode is %dx%dpx @ %dhz. \n", i, current.w, current.h, current.refresh_rate));
     if (i==0)
     {
       // Größen vom ersten Display übernehmen
@@ -240,11 +241,11 @@ int main(int argc, char** argv)
   // Query renderer info
   SDL_RendererInfo info;
   check_error_sdl( SDL_GetRendererInfo(gParams.Renderer, &info),"SDL_GetRendererInfo failed.");
-  printf("Renderer info:\r\n");
-  printf("Renderer is a software fallback: %s\r\n",info.flags & SDL_RENDERER_SOFTWARE ? "YES" : "NO");
-  printf("Renderer uses hardware acceleration: %s\r\n",info.flags & SDL_RENDERER_ACCELERATED ? "YES" : "NO");
-  printf("Present is synchronized with the refresh rate: %s\r\n",info.flags & SDL_RENDERER_PRESENTVSYNC ? "YES" : "NO");
-  printf("Renderer supports rendering to texture: %s\r\n",info.flags & SDL_RENDERER_TARGETTEXTURE ? "YES" : "NO");
+  DebugOut(strprintf("Renderer info:\r\n"));
+  DebugOut(strprintf("Renderer is a software fallback: %s\r\n",info.flags & SDL_RENDERER_SOFTWARE ? "YES" : "NO"));
+  DebugOut(strprintf("Renderer uses hardware acceleration: %s\r\n",info.flags & SDL_RENDERER_ACCELERATED ? "YES" : "NO"));
+  DebugOut(strprintf("Present is synchronized with the refresh rate: %s\r\n",info.flags & SDL_RENDERER_PRESENTVSYNC ? "YES" : "NO"));
+  DebugOut(strprintf("Renderer supports rendering to texture: %s\r\n",info.flags & SDL_RENDERER_TARGETTEXTURE ? "YES" : "NO"));
 
   SDL_ShowCursor(SDL_DISABLE);
   /*
@@ -290,6 +291,7 @@ int main(int argc, char** argv)
     bool DoPause=false;
     int CurrentImageNumber=0;
     bool DoNothing=false;
+    printf("Zeige %d Bilder an.\r\n",iFilesToDisplay.size());
 
     while (CurrentImageNumber<(int)iFilesToDisplay.size())
     {
@@ -297,6 +299,7 @@ int main(int argc, char** argv)
       {
         if (!DoPause && !DoNothing)
         {
+          printf("Lade Bildnummer: %d (%s)...",CurrentImageNumber,iFilesToDisplay.at(CurrentImageNumber).c_str());fflush(stdout);
           gParams.CurrentTexture=new ImageTexture();
           gParams.CurrentTexture->ImageFilename=iFilesToDisplay.at(CurrentImageNumber);
 
@@ -310,11 +313,9 @@ int main(int argc, char** argv)
           }
           gParams.OldTexture=gParams.CurrentTexture;
           gParams.CurrentTexture=NULL;
+          printf("OK\r\n");fflush(stdout);
         }
-        else
-        {
-          printf("Pause...\r\n");
-        }
+
 
         fflush(stdout);
 
@@ -331,14 +332,14 @@ int main(int argc, char** argv)
             IRThread->IRCommandQueue.GetUnsafe().pop_front();
             if (NewCode.Repeat==0 && (NewCode.Code==KEY_PREVIOUS || NewCode.Code==KEY_REWIND))
             {
-              printf("Ein Bild zurück...\r\n");
+              DebugOut(strprintf("Ein Bild zurück...\r\n"));
               CurrentImageNumber--;
               CurrentImageNumber=max(0,CurrentImageNumber);
               DoNotTouchImageNumber=true;
             }
             else if (NewCode.Repeat==0 && (NewCode.Code==KEY_NEXT || NewCode.Code==KEY_FASTFORWARD))
             {
-              printf("Ein Bild vor...\r\n");
+              DebugOut(strprintf("Ein Bild vor...\r\n"));
               CurrentImageNumber++;
               CurrentImageNumber=min(int(iFilesToDisplay.size())-1,CurrentImageNumber);
               DoNotTouchImageNumber=true;
@@ -346,6 +347,11 @@ int main(int argc, char** argv)
             else if (NewCode.Repeat==0 && (NewCode.Code==KEY_PLAY || NewCode.Code==KEY_STOP))
             {
               DoPause=!DoPause;
+              if (DoPause)
+                printf("Pause an...\r\n");
+              else
+                printf("Pause aus...\r\n");
+
               DoNotTouchImageNumber=true;
             }
             else
@@ -379,7 +385,7 @@ int main(int argc, char** argv)
     if (Action==1)
       break;
 
-    printf("Neuer Durchlauf...\r\n");
+    DebugOut(strprintf("Neuer Durchlauf...\r\n"));
     //iFilesToDisplay=iFilesAlreadyDisplayed;
     //iFilesAlreadyDisplayed.clear();
 
@@ -389,7 +395,7 @@ int main(int argc, char** argv)
   gParams.Cleanup();
   SDL_Quit();
   IRThread.reset();
-  fprintf(stderr,"Programm normal beendet!\r\n");
+  DebugOut(strprintf("Programm normal beendet!\r\n"));
   return 0;
 }
 
@@ -474,7 +480,7 @@ void LoadTextures(PiShowParams& aParams)
     Uint32 format = SDL_GetWindowPixelFormat(aParams.Window);
     if (format==SDL_PIXELFORMAT_UNKNOWN)
       throw runtime_error( "Unable to get pixel format! SDL Error: " + string(SDL_GetError() ));
-    printf("Window pixel format: %s\r\n",SDL_GetPixelFormatName(format));
+    DebugOut(strprintf("Window pixel format: %s\r\n",SDL_GetPixelFormatName(format)));
     //Convert surface to display format
 //    WindowSurface=SDL_GetWindowSurface( gWindow );
     //  if( WindowSurface == NULL )
@@ -578,7 +584,7 @@ void LoadTextures(PiShowParams& aParams)
   SDL_FreeSurface(Stripe2);
   delete[] pImage;
   long long ende=GetTime_us();
-  printf("Ladezeit des Bildes :%.2f ms\r\n",double(ende-start)/1000.0);
+  DebugOut(strprintf("Ladezeit des Bildes :%.2f ms\r\n",double(ende-start)/1000.0));
 }
 
 unsigned char* GetImage(const std::string aFileName, int & width, int & height, int & aRawDataLength)
@@ -623,7 +629,7 @@ unsigned char* GetImage(const std::string aFileName, int & width, int & height, 
     fseek(fp, 0L, SEEK_END);
     _jpegSize = ftell(fp);
     fseek(fp, 0L, SEEK_SET);
-    printf ("Komprimierte Bildgröße: %d\r\n",_jpegSize);
+    DebugOut(strprintf ("Komprimierte Bildgröße: %d\r\n",_jpegSize));
     _compressedImage = new unsigned char[_jpegSize];
     assert(_compressedImage != NULL);
     s = fread(_compressedImage, 1, _jpegSize, fp);
@@ -633,13 +639,13 @@ unsigned char* GetImage(const std::string aFileName, int & width, int & height, 
 
     _jpegDecompressor = tjInitDecompress();
     tjDecompressHeader2(_jpegDecompressor, _compressedImage, _jpegSize, &width, &height, &jpegSubsamp);
-    printf("Bildbreite: %d\r\n",width);
-    printf("Bildhöhe: %d\r\n",height);
-    printf ("Unkomprimierte Bildgröße: %d\r\n",width*height*COLOR_COMPONENTS);
+    DebugOut(strprintf("Bildbreite: %d\r\n",width));
+    DebugOut(strprintf("Bildhöhe: %d\r\n",height));
+    DebugOut(strprintf ("Unkomprimierte Bildgröße: %d\r\n",width*height*COLOR_COMPONENTS));
     aRawDataLength=width*height*COLOR_COMPONENTS;
     buffer=new unsigned char[aRawDataLength];
     tjDecompress2(_jpegDecompressor, _compressedImage, _jpegSize, buffer, width, 0/*pitch*/, height, TJPF_BGRA, TJFLAG_FASTDCT);
-    printf("Bild %s erfolgreich geladen.\r\n",aFileName.c_str());
+    DebugOut(strprintf("Bild %s erfolgreich geladen.\r\n",aFileName.c_str()));
   }
   catch (std::exception & err)
   {
@@ -776,6 +782,8 @@ void DoBlendEffect(BlendEffect aEffect, PiShowParams &aParams)
   {
     break;
   }
+  default:
+    break;
   }
 }
 
@@ -903,3 +911,4 @@ void CreateTextTexture(PiShowParams& aParams)
   }
   return;
 }
+

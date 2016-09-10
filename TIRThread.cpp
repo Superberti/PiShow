@@ -42,7 +42,7 @@ TIRThread::~TIRThread()
 
 void TIRThread::Execute()
 {
-  fprintf(stdout, "Starte Fernbedienungs-Thread.");
+  fprintf(stdout, "Starte Fernbedienungs-Thread.\r\n");
 
   //HandleCommand(1);
   int t, len;
@@ -104,10 +104,10 @@ void TIRThread::Execute()
           int RepeatCode=0;
           bool res=HexStringToInt(IRNumberString, IRNumber);
           res&=HexStringToInt(mCommands[1],RepeatCode);
-          fprintf(stdout,"Taste %d gedrückt. Res: %d RepeatCode: %d String %s\r\n", IRNumber,res, RepeatCode, IRNumberString.c_str());
 
           if (RepeatCode==0 && (IRNumber==KEY_PLAY || IRNumber==KEY_STOP || IRNumber==KEY_REWIND || IRNumber==KEY_FASTFORWARD || IRNumber==KEY_NEXT || IRNumber==KEY_PREVIOUS))
           {
+            fprintf(stdout,"Taste %d gedrückt. Res: %d RepeatCode: %d String %s\r\n", IRNumber,res, RepeatCode, IRNumberString.c_str());
             TCritGuard cg(IRCommandQueue.GetCritSec());
             // Bis zu 10 IR-Kommandos werden in der Queue zwischengespeichert. Aber nur Kommandos, die der Bildsteuerung dienen
             if (IRCommandQueue.GetUnsafe().size()<=10 )
@@ -131,7 +131,7 @@ void TIRThread::Execute()
         if (t < 0)
           perror("recv");
         else
-          fprintf(stdout,"Server closed connection\n");
+          fprintf(stdout,"Server closed connection\r\n");
         throw TOSErr("recv failed.",errno);
       }
     }
@@ -139,14 +139,14 @@ void TIRThread::Execute()
   }
   catch(std::exception & err)
   {
-    fprintf(stderr, "Exception in infrared thread: %s",err.what());
+    fprintf(stderr, "Exception in infrared thread: %s\r\n",err.what());
   }
   catch(...)
   {
-    fprintf(stderr, "Unknown exception in info thread.");
+    fprintf(stderr, "Unknown exception in info thread.\r\n");
   }
   close(mLircSocket);
-  fprintf(stdout, "Beende Fernbedienungs-Thread.");
+  fprintf(stdout, "Beende Fernbedienungs-Thread.\r\n");
 }
 
 // ----------------------------------------------------------------------------
