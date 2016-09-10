@@ -73,6 +73,14 @@ void BlurRGBA(int aWidth, int aHeight, int aPitch, unsigned char * pPixels, Uint
   }
   if (r<2)
     return;
+
+  if (aWidth / 2 <= r)
+  {
+    r = aWidth % 2 == 0 ? aWidth / 2 - 1 : aWidth / 2;
+  }
+
+  if (r<2)
+    return;
   const int NumBytesCurrent=aPitch*aHeight;
   // Aufteilung in einzelne Farbkanäle
   const int ChannelSize=NumBytesCurrent/4;
