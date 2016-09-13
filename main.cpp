@@ -280,7 +280,7 @@ int main(int argc, char** argv)
       while (iTmpDisplayedFiles.size()>0)
       {
         int i=rand() % iTmpDisplayedFiles.size();
-        iFilesToDisplay.push_back(iTmpDisplayedFiles[i]);
+        iFilesToDisplay.push_back(iTmpDisplayedFiles.at(i));
         iTmpDisplayedFiles.erase(iTmpDisplayedFiles.begin() + i);
       }
     }
@@ -298,7 +298,7 @@ int main(int argc, char** argv)
         if (!DoPause && !DoNothing)
         {
           gParams.CurrentTexture=new ImageTexture();
-          gParams.CurrentTexture->ImageFilename=iFilesToDisplay[CurrentImageNumber];
+          gParams.CurrentTexture->ImageFilename=iFilesToDisplay.at(CurrentImageNumber);
 
           LoadTextures(gParams);
 
@@ -315,6 +315,8 @@ int main(int argc, char** argv)
         {
           printf("Pause...\r\n");
         }
+
+        fflush(stdout);
 
         bool DoNotTouchImageNumber=false;
         Action= WaitAndCheckForQuit(SleepTime_s*1000);
@@ -338,7 +340,7 @@ int main(int argc, char** argv)
             {
               printf("Ein Bild vor...\r\n");
               CurrentImageNumber++;
-              CurrentImageNumber=min(int(iFilesToDisplay.size())-2,CurrentImageNumber);
+              CurrentImageNumber=min(int(iFilesToDisplay.size())-1,CurrentImageNumber);
               DoNotTouchImageNumber=true;
             }
             else if (NewCode.Repeat==0 && (NewCode.Code==KEY_PLAY || NewCode.Code==KEY_STOP))
@@ -351,8 +353,9 @@ int main(int argc, char** argv)
           }
 
         }
-        if (!DoNotTouchImageNumber)
+        if (!DoNotTouchImageNumber && !DoNothing)
           CurrentImageNumber++;
+
 
       }
       catch (exception& aErr)
@@ -373,12 +376,11 @@ int main(int argc, char** argv)
       break;  // zu viele Fehler...
     if (Action==1)
       break;
-    if (iFilesToDisplay.size()==0)
-    {
+
       printf("Neuer Durchlauf...\r\n");
       //iFilesToDisplay=iFilesAlreadyDisplayed;
       //iFilesAlreadyDisplayed.clear();
-    }
+
   }
   while (DoLoop && Action!=1 && iAllFilesToDisplay.size()>0);
 
