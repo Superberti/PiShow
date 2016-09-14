@@ -360,6 +360,8 @@ int main(int argc, char** argv)
       }
       catch (exception& aErr)
       {
+        // Im Fehlerfall: Ein Bild weiter!
+        CurrentImageNumber++;
         ErrCount++;
         fprintf(stderr,"Error: %s\r\n",aErr.what());
       }
@@ -377,9 +379,9 @@ int main(int argc, char** argv)
     if (Action==1)
       break;
 
-      printf("Neuer Durchlauf...\r\n");
-      //iFilesToDisplay=iFilesAlreadyDisplayed;
-      //iFilesAlreadyDisplayed.clear();
+    printf("Neuer Durchlauf...\r\n");
+    //iFilesToDisplay=iFilesAlreadyDisplayed;
+    //iFilesAlreadyDisplayed.clear();
 
   }
   while (DoLoop && Action!=1 && iAllFilesToDisplay.size()>0);
