@@ -191,7 +191,7 @@ int main(int argc, char** argv)
   //std::cout << "Non-option #" << i << ": " << parse.nonOption(i) << "\n";
 
   // Initialize SDL
-  check_error_sdl(SDL_Init(SDL_INIT_VIDEO) != 0, "Unable to initialize SDL");
+  check_error_sdl(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0, "Unable to initialize SDL");
 
   SDL_DisplayMode current;
 

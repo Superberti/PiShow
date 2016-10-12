@@ -11,6 +11,7 @@
 #include <wiringPi.h>
 //#include <lirc/lirc_client.h>
 #include "tools.h"
+#include <SDL2/SDL_mixer.h>
 
 #include "TIRThread.h"
 
@@ -40,15 +41,23 @@ TIRThread::~TIRThread()
 
 #define str_length 256
 
+#define NUM_WAVEFORMS 2
+const char* _waveFileNames[] =
+{
+  "/home/pi/Music/beep-07.wav",
+  "/home/pi/Music/beep-08b.wav",
+};
+
 void TIRThread::Execute()
 {
   fprintf(stdout, "Starte Fernbedienungs-Thread.\r\n");
-
+  sleep(5);
   //HandleCommand(1);
   int t, len;
   struct sockaddr_un remote;
   char str[str_length];
   bool gpio_ok=false;
+  bool sound_ok=false;
   try
   {
     // Starte die WiringPi-Api (wichtig)
@@ -64,6 +73,44 @@ void TIRThread::Execute()
   catch(...)
   {
     fprintf(stderr, "Unknown exception in gpio init.");
+  }
+  Mix_Chunk* Sounds[NUM_WAVEFORMS];
+  try
+  {
+    // Starte Sound-Api
+    memset(Sounds, 0, sizeof(Mix_Chunk*) * NUM_WAVEFORMS);
+    // Set up the audio stream
+    int result = Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024);
+    if( result < 0 )
+    {
+      throw TPiShowErr(strprintf("Unable to open audio: %s\n", SDL_GetError()));
+    }
+
+    result = Mix_AllocateChannels(4);
+    if( result < 0 )
+    {
+      throw TPiShowErr(strprintf("Unable to allocate mixing channels: %s\n", SDL_GetError()));
+    }
+
+    // Load waveforms
+    for( int i = 0; i < NUM_WAVEFORMS; i++ )
+    {
+      Sounds[i] = Mix_LoadWAV(_waveFileNames[i]);
+      if( Sounds[i] == NULL )
+      {
+        throw TPiShowErr(strprintf("Unable to load wave file: %s\n", _waveFileNames[i]));
+      }
+    }
+    fprintf(stderr, "Sound init OK.\r\n");
+    sound_ok=true;
+  }
+  catch(std::exception & err)
+  {
+    fprintf(stderr, "Exception in sound init: %s",err.what());
+  }
+  catch(...)
+  {
+    fprintf(stderr, "Unknown exception in sound init.");
   }
 
   try
@@ -112,9 +159,18 @@ void TIRThread::Execute()
             // Bis zu 10 IR-Kommandos werden in der Queue zwischengespeichert. Aber nur Kommandos, die der Bildsteuerung dienen
             if (IRCommandQueue.GetUnsafe().size()<=10 )
               IRCommandQueue.GetUnsafe().push_back(IRCode(IRNumber, RepeatCode));
+
+            if (sound_ok)
+            {
+              Mix_PlayChannel(-1, Sounds[0], 0);
+            }
           }
           else if (RepeatCode==0 && IRNumber==KEY_POWER && gpio_ok)
           {
+            if (sound_ok)
+            {
+              Mix_PlayChannel(-1, Sounds[1], 0);
+            }
             printf("Schalte Monitor ein/aus...\r\n");
             // Display ein/ausschalten
             digitalWrite(DISPLAY_POWER_PIN, 1);
@@ -147,6 +203,12 @@ void TIRThread::Execute()
     fprintf(stderr, "Unknown exception in info thread.\r\n");
   }
   close(mLircSocket);
+  for( int i = 0; i < NUM_WAVEFORMS; i++ )
+  {
+    Mix_FreeChunk(Sounds[i]);
+  }
+
+  Mix_CloseAudio();
   fprintf(stdout, "Beende Fernbedienungs-Thread.\r\n");
 }
 

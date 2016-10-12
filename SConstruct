@@ -12,7 +12,7 @@ else:
     static_jpeg_lib = File('/opt/libjpeg-turbo/lib32/libturbojpeg.a')
 env.ParseConfig('sdl2-config --cflags --libs')
 env.Append(CCFLAGS = '-Wall -std=c++11 -O2')
-env['LIBS']=['m','SDL2_image','SDL2_ttf','SDL2',static_jpeg_lib,'SDL2_gfx','pthread','wiringPi']
+env['LIBS']=['m','SDL2_image','SDL2_ttf','SDL2',static_jpeg_lib,'SDL2_gfx','pthread','wiringPi','SDL2_mixer']
 #env['LIBPATH']=['/opt/libjpeg-turbo/lib32/']
 env['CPPPATH']=['/opt/libjpeg-turbo/include/','/opt/vc/include']
 
