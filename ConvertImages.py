@@ -27,8 +27,14 @@ DisplayHeight=1080
 
 while 1==1:
     ImageList = glob.glob(rootdir+"*.JPG")
-    ImageList2=glob.glob(rootdir+"*.jpg")
+    ImageList2 =glob.glob(rootdir+"*.jpg")
     ImageList.extend(ImageList2)
+    
+    # Liste überprüfen, ob Bilder mit *_error.JPG vorhanden sind. Die sollten nicht noch einmal konvertiert werden...
+    for ImageFileName in ImageList:
+        if "_error.JPG" in ImageFileName:
+            print("Überspringe fehlerhaftes Bild:"+ImageFileName, file=sys.stdout, flush=True)
+            ImageList.remove(ImageFileName)
 
     if len(ImageList)>0:
         print("Neue Bilder erkannt. Starte Konversion...", file=sys.stdout, flush=True)
@@ -71,10 +77,11 @@ while 1==1:
 
         ExifArgs=ExifArgsString.decode("utf-8").splitlines()
         #print(ExifArgs)
-
+        Orientation = -1
         Width=int(ExifArgs[0])
         Height=int(ExifArgs[1])
-        Orientation=int(ExifArgs[2])
+        if RepresentsInt(ExifArgs[2])==True:
+            Orientation=int(ExifArgs[2])
         Description=ExifArgs[3]
 
 
@@ -106,7 +113,6 @@ while 1==1:
             ExifArgs=ExifArgsString.decode("utf-8").splitlines()
             Width=int(ExifArgs[0])
             Height=int(ExifArgs[1])
-            Orientation=int(ExifArgs[2])
 
             if Width>2048 or Height>2048:
                 print("Bild wird nicht konvertiert, da eine Seite immer noch größer als 2048 pixel ist.", file=sys.stdout, flush=True)
