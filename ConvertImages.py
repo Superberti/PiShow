@@ -3,8 +3,11 @@
 
 # Hier kommen die unbearbeiteten Bilder an
 rootdir="/samba/public/"
-convdir="/home/pi/Pictures/Anzeige/conv/"
+convdir="/home/rutsch/Pictures/Anzeige/conv/"
 tempdir="/tmp/"
+
+DisplayWidth=1920
+DisplayHeight=1080
 
 import subprocess
 import os
@@ -21,13 +24,51 @@ def RepresentsInt(s):
         except ValueError:
                 return False
 
-print ("Raspi-Bilderrahmen-Konverter gestartet...")
-DisplayWidth=1920
-DisplayHeight=1080
+if os.path.isdir(rootdir)==False:
+    print("Das Verzeichnis <"+rootdir+"> existiert nicht. Beende Konverter.", file=sys.stdout, flush=True)
+    this.exit(1)
+else:
+    print("Verzeichnis <"+rootdir+"> gefunden...", file=sys.stdout, flush=True)
+    
+if os.access(rootdir, os.R_OK)==False or os.access(rootdir, os.W_OK)==False:
+    print("Fehlende Lese/Schreibberechtigung im Verzeichnis <"+rootdir+">. Beende Konverter.", file=sys.stdout, flush=True)
+    this.exit(1)
+else:
+    print("Schreib/Leseberechtigung OK: <"+rootdir+">", file=sys.stdout, flush=True)
+
+if os.path.isdir(convdir)==False:
+    print("Das Verzeichnis <"+convdir+"> existiert nicht. Beende Konverter.", file=sys.stdout, flush=True)
+    this.exit(1)
+else:
+    print("Verzeichnis <"+convdir+"> gefunden...", file=sys.stdout, flush=True)
+    
+if os.access(convdir, os.R_OK)==False or os.access(convdir, os.W_OK)==False:
+    print("Fehlende Lese/Schreibberechtigung im Verzeichnis <"+convdir+">. Beende Konverter.", file=sys.stdout, flush=True)
+    this.exit(1)
+else:
+    print("Schreib/Leseberechtigung OK: <"+convdir+">", file=sys.stdout, flush=True)
+    
+if os.path.isdir(tempdir)==False:
+    print("Das Verzeichnis <"+tempdir+"> existiert nicht. Beende Konverter.", file=sys.stdout, flush=True)
+    this.exit(1)
+else:
+    print("Verzeichnis <"+tempdir+"> gefunden...", file=sys.stdout, flush=True)
+    
+if os.access(tempdir, os.R_OK)==False or os.access(tempdir, os.W_OK)==False:
+    print("Fehlende Lese/Schreibberechtigung im Verzeichnis <"+tempdir+">. Beende Konverter.", file=sys.stdout, flush=True)
+    this.exit(1)
+else:
+    print("Schreib/Leseberechtigung OK: <"+tempdir+">", file=sys.stdout, flush=True)
+    
+print ("Alle Checks OK, Raspi-Bilderrahmen-Konverter wird gestartet...")
 
 while 1==1:
     ImageList = glob.glob(rootdir+"*.JPG")
     ImageList2 =glob.glob(rootdir+"*.jpg")
+    ImageList.extend(ImageList2)
+    ImageList2 =glob.glob(rootdir+"*.jpeg")
+    ImageList.extend(ImageList2)
+    ImageList2 =glob.glob(rootdir+"*.JPEG")
     ImageList.extend(ImageList2)
     
     # Liste überprüfen, ob Bilder mit *_error.JPG vorhanden sind. Die sollten nicht noch einmal konvertiert werden...
@@ -113,8 +154,12 @@ while 1==1:
             ExifArgs=ExifArgsString.decode("utf-8").splitlines()
             Width=int(ExifArgs[0])
             Height=int(ExifArgs[1])
-
-            if Width>2048 or Height>2048:
+            
+            # Zu kleine Bilder wollen wird aber auch nicht (z.B. Thumnails). Mindestens 512 Pixel
+            if Width<512 or Height<512:
+                print("Bild wird nicht konvertiert, da mindestens eine Seite kleiner als 512 pixel ist.", file=sys.stdout, flush=True)
+                os.remove(NewFileName)
+            elif Width>2048 or Height>2048:# Überprüfen, ob jetzt keine Dimension 2048 (max. Texturgröße) überschreitet:
                 print("Bild wird nicht konvertiert, da eine Seite immer noch größer als 2048 pixel ist.", file=sys.stdout, flush=True)
                 os.remove(NewFileName)
                 NewFileName=os.path.join(rootdir,BaseFileName+"_error.JPG")
