@@ -3,7 +3,7 @@
 
 # Hier kommen die unbearbeiteten Bilder an
 rootdir="/samba/public/"
-convdir="/home/rutsch/Pictures/Anzeige/conv/"
+convdir="/home/pi/Pictures/Anzeige/conv/"
 tempdir="/tmp/"
 
 DisplayWidth=1920
@@ -26,37 +26,37 @@ def RepresentsInt(s):
 
 if os.path.isdir(rootdir)==False:
     print("Das Verzeichnis <"+rootdir+"> existiert nicht. Beende Konverter.", file=sys.stdout, flush=True)
-    this.exit(1)
+    exit(1)
 else:
     print("Verzeichnis <"+rootdir+"> gefunden...", file=sys.stdout, flush=True)
     
 if os.access(rootdir, os.R_OK)==False or os.access(rootdir, os.W_OK)==False:
     print("Fehlende Lese/Schreibberechtigung im Verzeichnis <"+rootdir+">. Beende Konverter.", file=sys.stdout, flush=True)
-    this.exit(1)
+    exit(1)
 else:
     print("Schreib/Leseberechtigung OK: <"+rootdir+">", file=sys.stdout, flush=True)
 
 if os.path.isdir(convdir)==False:
     print("Das Verzeichnis <"+convdir+"> existiert nicht. Beende Konverter.", file=sys.stdout, flush=True)
-    this.exit(1)
+    exit(1)
 else:
     print("Verzeichnis <"+convdir+"> gefunden...", file=sys.stdout, flush=True)
     
 if os.access(convdir, os.R_OK)==False or os.access(convdir, os.W_OK)==False:
     print("Fehlende Lese/Schreibberechtigung im Verzeichnis <"+convdir+">. Beende Konverter.", file=sys.stdout, flush=True)
-    this.exit(1)
+    exit(1)
 else:
     print("Schreib/Leseberechtigung OK: <"+convdir+">", file=sys.stdout, flush=True)
     
 if os.path.isdir(tempdir)==False:
     print("Das Verzeichnis <"+tempdir+"> existiert nicht. Beende Konverter.", file=sys.stdout, flush=True)
-    this.exit(1)
+    exit(1)
 else:
     print("Verzeichnis <"+tempdir+"> gefunden...", file=sys.stdout, flush=True)
     
 if os.access(tempdir, os.R_OK)==False or os.access(tempdir, os.W_OK)==False:
     print("Fehlende Lese/Schreibberechtigung im Verzeichnis <"+tempdir+">. Beende Konverter.", file=sys.stdout, flush=True)
-    this.exit(1)
+    exit(1)
 else:
     print("Schreib/Leseberechtigung OK: <"+tempdir+">", file=sys.stdout, flush=True)
     
