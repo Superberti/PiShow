@@ -9,7 +9,7 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
 - sudo apt-get install libasound2-dev libpulse-dev libturbojpeg-dev imagemagick exiftool
 - sudo apt-get install libsdl2-dev 
 - git clone https://github.com/Superberti/PiShow
-<br>
+
 - Sourcecodes runterladen, kompilieren und installieren:
   - SDL2_gfx:
     - http://www.ferzkopp.net/Software/SDL2_gfx/SDL2_gfx-1.0.4.tar.gz
@@ -44,7 +44,7 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
     - https://github.com/WiringPi/WiringPi/releases/download/3.14/wiringpi_3.14_arm64.deb
     - ```sudo apt install ./wiringpi-3.0-1.deb```
   - ```sudo ldconfig``` (damit die neu compilierten Dlls auch gefunden werden)
-<br>  
+
 - Jetzt kann man in das Verzeichnis PiShow wechseln und mit "scons" die PiShow kompilieren.
 - Infrarot-Fernbedienungs-Support: sudo apt-get install lirc
 - sudo nano /boot/config.txt, Zeile "dtoverlay=lirc-rpi,gpio_out_pin=17,gpio_in_pin=18,gpio_in_pull=up" einfügen
