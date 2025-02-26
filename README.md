@@ -5,10 +5,19 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
 # Schritte zur Installation
 
 - Aktuelles Raspberry OS installieren
-- sudo apt-get install lsof git scons libsdl2-dev cmake
-- git clone https://github.com/Superberti/PiShow
+- sudo apt-get install lsof git scons libsdl2-dev cmake automake
 - sudo apt-get install libasound2-dev libpulse-dev libturbojpeg-dev imagemagick exiftool
-- Sourcecodes runterladen: SDL2, SDL2_gfx, SDL2_image, SDL2_ttf, SDL_mixer
+- sudo apt-get install libsdl2-dev 
+- git clone https://github.com/Superberti/PiShow
+
+- Sourcecodes runterladen:
+  SDL2_gfx:
+    https://www.ferzkopp.net/wordpress/2016/01/02/sdl_gfx-sdl2_gfx/
+    heruterladen und entpacken
+    ins Verzeichnis wechseln
+  SDL2_image:
+  SDL2_ttf:
+  SDL_mixer:
 - Sourcen entpacken und nach Anleitung kompilieren und installieren. "make -j 4" benutzt alle Kerne.
 - Bei SDL2_gfx mit "./configure --disable-mmx" konfigurieren
 - Jetzt kann man in das Verzeichnis PiShow wechseln und mit "scons" die PiShow kompilieren.
