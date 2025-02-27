@@ -62,12 +62,12 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
     [Bilder]
     comment = Bilder zur Konversion
     path = /samba/public
-    read only = no```
+    read only = no
 
 - Autostart der PiShow:
     - /etc/rc.local ergänzen:
       - ```# Software für das Anzeigen der Bilder auf dem Bilderrahmen starten
             /home/pi/PiShow/PiShow -r -t 10 -l /home/pi/Pictures/Anzeige/conv &
             # Python-Script für das automatische Konvertieren der Bilder starten
-            (/home/pi/PiShow/ConvertImages.py) &>> /var/log/convert_images.log```
+            (/home/pi/PiShow/ConvertImages.py) &>> /var/log/convert_images.log
       - nicht vergessen die Pfade für den aktuellen Nutzer (hier "pi") und das Verzeichnis der durch das Skript konvertierten Bilder (hier "Pictures/Anzeige/conv") anzupassen
