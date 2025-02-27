@@ -53,16 +53,16 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
 
 - Samba konfigurieren (exportiert das SMB-Verzeichnis für das Konversationsskript)
   - ```[global]
-workgroup = WORKGROUP
-security = user
-encrypt passwords = yes
-client min protocol = SMB2
-client max protocol = SMB3
+    workgroup = WORKGROUP
+    security = user
+    encrypt passwords = yes
+    client min protocol = SMB2
+    client max protocol = SMB3
 
-[Bilder]
-comment = Bilder zur Konversion
-path = /samba/public
-read only = no```
+    [Bilder]
+    comment = Bilder zur Konversion
+    path = /samba/public
+    read only = no```
 
 - Autostart der PiShow:
     - /etc/rc.local ergänzen:
