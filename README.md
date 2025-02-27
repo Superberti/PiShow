@@ -70,4 +70,5 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
             /home/pi/PiShow/PiShow -r -t 10 -l /home/pi/Pictures/Anzeige/conv &
             # Python-Script für das automatische Konvertieren der Bilder starten
             (/home/pi/PiShow/ConvertImages.py) &>> /var/log/convert_images.log
-      - nicht vergessen die Pfade für den aktuellen Nutzer (hier "pi") und das Verzeichnis der durch das Skript konvertierten Bilder (hier "Pictures/Anzeige/conv") anzupassen
+  - nicht vergessen die Pfade für den aktuellen Nutzer (hier "pi") und das Verzeichnis der durch das Skript konvertierten Bilder (hier "Pictures/Anzeige/conv") anzupassen
+  - Evtl. die Verzeichnisse im Skript "ConvertImages.py" ganz oben anpassen
