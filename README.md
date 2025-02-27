@@ -45,7 +45,17 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
     - ```sudo apt install ./wiringpi-3.0-1.deb```
   - ```sudo ldconfig``` (damit die neu compilierten Dlls auch gefunden werden)
 
+
 - Jetzt kann man in das Verzeichnis PiShow wechseln und mit "scons" die PiShow kompilieren.
 - Infrarot-Fernbedienungs-Support: sudo apt-get install lirc
 - sudo nano /boot/config.txt, Zeile "dtoverlay=lirc-rpi,gpio_out_pin=17,gpio_in_pin=18,gpio_in_pull=up" einfügen
 - dann /etc/lirc/lirc_options.conf bearbeiten und "driver = default" und "device = /dev/lirc0" setzen
+
+
+- Autostart der PiShow:
+    - /etc/rc.local ergänzen:
+      - ```# Software für das Anzeigen der Bilder auf dem Bilderrahmen starten
+            /home/pi/PiShow/PiShow -r -t 10 -l /home/pi/Pictures/Anzeige/conv &
+            # Python-Script für das automatische Konvertieren der Bilder starten
+            (/home/pi/PiShow/ConvertImages.py) &>> /var/log/convert_images.log```
+      - nicht vergessen die Pfade für den aktuellen Nutzer (hier "pi") und das Verzeichnis der durch das Skript konvertierten Bilder (hier "Pictures/Anzeige/conv") anzupassen
