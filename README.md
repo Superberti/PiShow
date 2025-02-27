@@ -5,7 +5,7 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
 # Schritte zur Installation
 
 - Aktuelles Raspberry OS installieren
-- sudo apt-get install python3 lsof git scons libsdl2-dev cmake automake
+- sudo apt-get install python3 lsof git scons libsdl2-dev cmake automake samba
 - sudo apt-get install libasound2-dev libpulse-dev libturbojpeg-dev imagemagick exiftool
 - sudo apt-get install libsdl2-dev 
 - git clone https://github.com/Superberti/PiShow
@@ -51,6 +51,18 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
 - sudo nano /boot/config.txt, Zeile "dtoverlay=lirc-rpi,gpio_out_pin=17,gpio_in_pin=18,gpio_in_pull=up" einfügen
 - dann /etc/lirc/lirc_options.conf bearbeiten und "driver = default" und "device = /dev/lirc0" setzen
 
+- Samba konfigurieren (exportiert das SMB-Verzeichnis für das Konversationsskript)
+  - ```[global]
+workgroup = WORKGROUP
+security = user
+encrypt passwords = yes
+client min protocol = SMB2
+client max protocol = SMB3
+
+[Bilder]
+comment = Bilder zur Konversion
+path = /samba/public
+read only = no```
 
 - Autostart der PiShow:
     - /etc/rc.local ergänzen:
