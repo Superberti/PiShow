@@ -52,7 +52,8 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
 - dann /etc/lirc/lirc_options.conf bearbeiten und "driver = default" und "device = /dev/lirc0" setzen
 
 - Samba konfigurieren (exportiert das SMB-Verzeichnis für das Konversationsskript, "/etc/samba.smb.conf")
-  - ```[global]
+  - ```
+    [global]
     workgroup = WORKGROUP
     security = user
     encrypt passwords = yes
@@ -65,7 +66,8 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
     read only = no
     
 - Samba-Verzeichnis für Benutzer "pi" anlegen:
-  - ```sudo mkdir /samba
+  - ```
+    sudo mkdir /samba
     sudo mkdir /samba/public
     sudo chown pi:pi /samba/public
     sudo chmod 700 /samba/public
@@ -76,27 +78,30 @@ Die PiShow basiert auf der libsdl2 (2.0.3) und benötigt kein X-Windows, aerbeit
 
 - Autostart der PiShow:
     - /etc/rc.local ergänzen:
-      - ``` # WiFi-Powermanagment aus:
-            /sbin/iw wlan0 set power_save off
-            # Software für das Anzeigen der Bilder auf dem Bilderrahmen starten
-            /home/pi/PiShow/PiShow -r -t 10 -l /home/pi/Pictures/Anzeige/conv &
-            # Python-Script für das automatische Konvertieren der Bilder starten
-            (/home/pi/PiShow/ConvertImages.py) &>> /var/log/convert_images.log
+      - ```
+        # WiFi-Powermanagment aus:
+        /sbin/iw wlan0 set power_save off
+        # Software für das Anzeigen der Bilder auf dem Bilderrahmen starten
+        /home/pi/PiShow/PiShow -r -t 10 -l /home/pi/Pictures/Anzeige/conv &
+        # Python-Script für das automatische Konvertieren der Bilder starten
+        (/home/pi/PiShow/ConvertImages.py) &>> /var/log/convert_images.log
+        
   - nicht vergessen die Pfade für den aktuellen Nutzer (hier "pi") und das Verzeichnis der durch das Skript konvertierten Bilder (hier "Pictures/Anzeige/conv") anzupassen
   - Evtl. die Verzeichnisse im Skript "ConvertImages.py" ganz oben anpassen
  
 - Für die Display-Elektronik '2020 brauch man noch folgende Änderungen für das Booten:
   - "sudo nano /boot/config.txt" und folgende Zeilen anpassen:
-    - ```# uncomment if hdmi display is not detected and composite is being output
-          hdmi_force_hotplug=1
+    - ```
+      # uncomment if hdmi display is not detected and composite is being output
+      hdmi_force_hotplug=1
 
-          # uncomment to force a specific HDMI mode (this will force VGA)
-          hdmi_group=2
-          hdmi_mode=82
+      # uncomment to force a specific HDMI mode (this will force VGA)
+      hdmi_group=2
+      hdmi_mode=82
 
-          # uncomment to force a HDMI mode rather than DVI. This can make audio work in
-          # DMT (computer monitor) modes
-          hdmi_drive=2
+      # uncomment to force a HDMI mode rather than DVI. This can make audio work in
+      # DMT (computer monitor) modes
+      hdmi_drive=2
 
   Wenn man das nicht ändert, dann bleibt das Display blau, da der Raspi beim booten das Display (noch)
   nicht findet und den HDMI-Ausgang abschaltet.
